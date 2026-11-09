@@ -194,8 +194,8 @@ GEMINI_THINKING_HEADROOM = 2000     # thinking tokens count inside the output li
 
 
 def detect_provider(api_key: str) -> str:
-    """Google API keys start with 'AIza'; anything else is treated as an Anthropic key."""
-    return "gemini" if str(api_key).startswith("AIza") else "anthropic"
+    """Anthropic keys start with 'sk-ant-'. Google keys come in more than one shape (AIza..., and newer AQ....), so anything else is Gemini."""
+    return "anthropic" if str(api_key).startswith("sk-ant-") else "gemini"
 
 
 def pick_key(secrets: dict) -> str:
@@ -220,7 +220,8 @@ def make_llm(cfg: dict, secrets: dict, role: str, usage_log: Optional[Path]) -> 
     key = pick_key(secrets)
     if not key:
         return None
-    provider = detect_provider(key)
+    forced = str((cfg.get("llm") or {}).get("provider", "auto")).lower()
+    provider = forced if forced in ("gemini", "anthropic") else detect_provider(key)
     model, pin, pout = model_settings(cfg, provider, role)
     llm = LLM(key, model, usage_log, pin, pout, provider=provider)
     llm.pacer = _Pacer(float(((cfg.get("llm") or {}).get("requests_per_minute", 0))))

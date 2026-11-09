@@ -61,8 +61,11 @@ The edition is a magazine page (`news/magazine.py`): lead story, "Today in five"
 Each run also writes `data/news/diagnostics.json` (model errors, top failure reasons, sample unreadable articles, failed feeds) and the pre-flight
 `data/news/selftest.json`; both are committed, so a failed run can be diagnosed from the repo.
 
+### Doctor (deep check)
+Actions tab, **Doctor**, Run workflow. It fetches every feed, pushes the newest items of each through the full reading chain, runs the model on a sample, and saves `reports/doctor.html` and `data/news/doctor.json`.
+
 ### Model provider
-Either a Google Gemini key or an Anthropic key works. The key goes in the GitHub secret `GEMINI_API_KEY` (or the older name `ANTHROPIC_API_KEY`); a key that starts with `AIza` is treated as Gemini.
+Either a Google Gemini key or an Anthropic key works. The key goes in the GitHub secret `GEMINI_API_KEY` (or the older name `ANTHROPIC_API_KEY`); only keys starting `sk-ant-` are treated as Anthropic; any other key is Gemini.
 Gemini uses `gemini-3.5-flash-lite` for reading and headline search (Google Search grounding), and `gemini-3.6-flash` for the weekly calendar. Models and prices are in `config/news_sources.yaml` under `llm.gemini`.
 
 ### Cost per run (Anthropic list prices, Nov 2026)

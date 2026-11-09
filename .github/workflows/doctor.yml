@@ -1,0 +1,31 @@
+name: Doctor (deep check of the news sources and the model)
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: informed-trading-commits
+  cancel-in-progress: false
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements.txt
+      - name: Run the doctor
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m news.doctor
+      - name: Save the result
+        if: always()
+        run: |
+          git config user.name "informed-trading-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -f data/news/doctor.json reports/doctor.html || true
+          git diff --cached --quiet || git commit -m "Doctor run $(TZ=Asia/Kolkata date +'%Y-%m-%d %H:%M IST')"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push

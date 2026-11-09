@@ -43,14 +43,13 @@ feeds:
   - {name: "Middle East energy news", category: world, region: middleeast, mode: gnews, query: "(Iran OR Hormuz OR Gulf oil) when:2d"}
   - {name: "Deals news",              category: world, mode: gnews, query: "(acquire OR takeover OR buyout OR merger) billion when:2d"}
   # ---- wider coverage: India, USA, Europe (all to_verify; failures are listed in the coverage table, never hidden) ----
-  - {name: "Moneycontrol Top News",    category: india, region: india, mode: rss, url: "https://www.moneycontrol.com/rss/MCtopnews.xml", status: to_verify, assume_tz: "+05:30"}
-  - {name: "Moneycontrol Business",    category: india, region: india, mode: rss, url: "https://www.moneycontrol.com/rss/business.xml", status: to_verify, assume_tz: "+05:30"}
-  - {name: "Indian Express Business",  category: india, region: india, mode: rss, url: "https://indianexpress.com/section/business/feed/", status: to_verify, assume_tz: "+05:30"}
   - {name: "Hindustan Times Business", category: india, region: india, mode: rss, url: "https://www.hindustantimes.com/feeds/rss/business/rssfeed.xml", status: to_verify, assume_tz: "+05:30"}
   - {name: "Times of India Business",  category: india, region: india, mode: rss, url: "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms", status: to_verify, assume_tz: "+05:30"}
-  - {name: "Financial Express Markets", category: india, region: india, mode: rss, url: "https://www.financialexpress.com/market/feed/", status: to_verify, assume_tz: "+05:30"}
   - {name: "ET Economy",               category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/news/economy/rssfeeds/1373380680.cms", status: to_verify, assume_tz: "+05:30"}
   - {name: "ET Industry",              category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/industry/rssfeeds/13352306.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Moneycontrol (via Google News)",      category: india, region: india, mode: gnews, query: "site:moneycontrol.com (markets OR stocks OR economy OR commodities) when:1d"}
+  - {name: "Indian Express (via Google News)",    category: india, region: india, mode: gnews, query: "site:indianexpress.com (business OR economy OR markets) when:1d"}
+  - {name: "Financial Express (via Google News)", category: india, region: india, mode: gnews, query: "site:financialexpress.com (market OR economy OR industry) when:1d"}
   - {name: "India top stories (via Google News)", category: india, region: india, mode: gnews, query: "(India economy OR Sensex OR Nifty OR RBI OR Indian companies results) when:1d"}
   - {name: "NYT Business",             category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml", status: to_verify, paywalled: true}
   - {name: "NYT Economy",              category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml", status: to_verify, paywalled: true}
@@ -69,7 +68,6 @@ feeds:
   - {name: "CNBC Finance",             category: world, region: americas, mode: rss, url: "https://www.cnbc.com/id/10000664/device/rss/rss.html", status: to_verify}
   - {name: "CNBC Energy",              category: world, mode: rss, url: "https://www.cnbc.com/id/19836768/device/rss/rss.html", status: to_verify}
   - {name: "CNBC Technology",          category: tech, mode: rss, url: "https://www.cnbc.com/id/19854910/device/rss/rss.html", status: to_verify}
-  - {name: "Yahoo Finance",            category: world, region: americas, mode: rss, url: "https://finance.yahoo.com/news/rssindex", status: to_verify}
   - {name: "Fox Business",             category: world, region: americas, mode: rss, url: "https://moxie.foxbusiness.com/google-publisher/latest.xml", status: to_verify}
   - {name: "US corporate news (via Google News)", category: world, region: americas, mode: gnews, query: "(earnings OR layoffs OR antitrust OR SEC OR Fed) Wall Street when:1d"}
   - {name: "Euronews Business",        category: world, region: europe, mode: rss, url: "https://www.euronews.com/rss?level=theme&name=business", status: to_verify}
@@ -89,7 +87,6 @@ feeds:
   - {name: "BusinessLine Economy",     category: india, region: india, mode: rss, url: "https://www.thehindubusinessline.com/economy/feeder/default.rss", status: to_verify, assume_tz: "+05:30"}
   - {name: "Business Standard Companies", category: india, region: india, mode: rss, url: "https://www.business-standard.com/rss/companies-101.rss", status: to_verify, assume_tz: "+05:30"}
   - {name: "ET Tech",                  category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/tech/rssfeeds/13357270.cms", status: to_verify, assume_tz: "+05:30"}
-  - {name: "Indian Express Economy",   category: india, region: india, mode: rss, url: "https://indianexpress.com/section/business/economy/feed/", status: to_verify, assume_tz: "+05:30"}
   - {name: "NYT Technology",           category: tech, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", status: to_verify, paywalled: true}
   - {name: "NYT Health",               category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml", status: to_verify, paywalled: true}
   - {name: "NYT Energy and Environment", category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/EnergyEnvironment.xml", status: to_verify, paywalled: true}
@@ -157,11 +154,12 @@ limits:
     tool_type: web_search_20250305  # check Anthropic's docs for the current version string if rejected
 
 llm:
+  provider: auto                      # auto: keys starting sk-ant- are Anthropic, anything else is Gemini. Or force: gemini | anthropic
   extract_model: claude-haiku-5-5      # model strings from Anthropic's published list
   # List prices in USD per million tokens, used for the cost estimate and the spending stop. Check Anthropic's pricing page and edit.
   price_input_per_mtok: 0.10       # Claude Haiku 5.5, prompts up to 100k tokens (platform.claude.com pricing page, checked 9 Nov 2026)
   price_output_per_mtok: 0.50
-  # Used instead when the key is a Google (Gemini) key (starts with AIza). Prices: ai.google.dev model pages, checked 10 Nov 2026; edit if they change.
+  # Used instead when the key is a Google (Gemini) key. Prices: ai.google.dev model pages, checked 10 Nov 2026; edit if they change.
   requests_per_minute: 30          # all workers together; the pacer waits instead of letting the API answer 429
   gemini:
     extract_model: gemini-3.5-flash-lite      # stable; default thinking level is minimal

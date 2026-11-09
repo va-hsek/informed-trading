@@ -159,7 +159,7 @@ def load_glance(path: Path, now: datetime, max_age_days: int = 3) -> tuple[list[
 
 def markets_html(rows: list[dict], note: str) -> str:
     if not rows:
-        return f'<section class="strip empty"><p>{esc(note)}</p></section>'
+        return ""                                       # no dashboard (it is written by the action report on your own computer): show nothing
     tiles = []
     for r in rows:
         chg = r.get("chg_text") or ""
@@ -322,7 +322,27 @@ details.hl summary{display:flex;justify-content:space-between;padding:.5rem 0;co
 .et{font:700 .74rem var(--sans);color:var(--mute);padding-top:.2rem}.ec{font:400 .92rem/1.45 var(--sans)}.ec strong{font:700 1rem/1.3 var(--serif)}.ex{color:var(--mute);margin:.15rem 0 .3rem}
 footer.foot{margin:3rem 0 2.5rem;padding-top:1rem;border-top:3px double var(--ink);font:400 .8rem/1.55 var(--sans);color:var(--mute)}
 @media print{nav.bar,.switch{display:none}.lens{display:block!important}.storyline{break-inside:avoid}}
+@media(max-width:640px){
+body{font-size:1.02rem;line-height:1.58}.wrap{padding:0 14px}
+.mast{padding:1.1rem 14px .6rem}.mast .top{font-size:.6rem;letter-spacing:.12em;justify-content:center;gap:.2rem 1rem}
+.mast h1{font-size:2.5rem;margin:.35rem 0}.mast .sub{font-size:.78rem}
+nav.bar .wrap{padding:.5rem 14px}nav.bar a{padding:.55rem .95rem;font-size:.74rem}
+.front{gap:1rem;margin:1rem 0 .4rem}.five{order:-1;padding:.8rem 1rem}
+.storyline{padding:.9rem .95rem .8rem;border-radius:0 0 8px 8px}
+.storyline.feature .lead .body{column-width:auto;column-count:1}
+.storyline.feature .lead .body p:first-child:first-letter{font-size:2.9rem;padding:.2rem .4rem 0 0}
+.story h3{font-size:1.28rem}.story.lead h3{font-size:1.55rem}.rel h4{font-size:1rem}
+.block{margin:1.8rem 0}.bh{gap:.3rem .7rem}.bh h2{font-size:1.45rem}.count{margin-left:0}
+.grid{gap:.9rem}.tiles{grid-template-columns:repeat(2,1fr)}
+.switch{display:flex}.switch label{flex:1;text-align:center;padding:.8rem .4rem;font-size:.74rem}
+details.more summary,details.moresec summary,details.hl summary,.quiet summary{padding:.55rem 0;min-height:44px}
+.day li{grid-template-columns:3.4rem 1fr}.rel{padding-left:.7rem}.cite{display:inline}
+.tw{margin:0 -14px;padding:0 14px}
+}
+.totop{position:fixed;right:14px;bottom:16px;z-index:30;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;text-decoration:none;font:700 1.2rem var(--sans);box-shadow:0 2px 10px #0004;opacity:.88}
+@media print{.totop{display:none}}
 """
+
 
 JS = ("document.addEventListener('click',function(e){var a=e.target.closest('a[data-lens]');if(!a)return;"
       "var r=document.getElementById(a.getAttribute('data-lens'));if(r)r.checked=true;});")
@@ -418,7 +438,7 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
             f"<main class='wrap'>{''.join(parts)}"
             "<footer class='foot'>How this page is made: each sentence is a statement taken from the article linked after it. Code checked that the supporting words "
             "appear in that article and that every number in the sentence is present in it. Sentences are paraphrased, not copied. Nothing here is a recommendation to buy or sell.</footer>"
-            f"</main><script>{JS}</script></body></html>")
+            f"</main><a class='totop' href='#' aria-label='Back to top'>↑</a><script>{JS}</script></body></html>")
 
 
 def ROOT_DASH(cfg: dict) -> Path:

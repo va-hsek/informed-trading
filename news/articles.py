@@ -173,7 +173,14 @@ def read_article(item, robots: RobotsCache, http_get: Callable, http_json: Calla
     except FetchError as e:
         why += f"; Wayback lookup failed ({e})"
     try:
-        for uri in memento_snapshots(url, item.published, http_json):
+        if getattr(robots, "memento_fails", 0) >= ARCHIVE_MAX_FAILS:
+            raise ValueError("Memento aggregator skipped after repeated failures")
+        try:
+            uris = memento_snapshots(url, item.published, http_json)
+        except FetchError:
+            robots.memento_fails = getattr(robots, "memento_fails", 0) + 1
+            raise
+        for uri in uris:
             if "web.archive.org" in uri:
                 continue                                   # already tried above
             if "archive.ph" in uri or "archive.today" in uri or "archive.is" in uri:

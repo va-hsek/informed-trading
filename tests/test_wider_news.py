@@ -338,3 +338,29 @@ def test_run_stops_early_and_says_why_when_the_model_is_down(tmp_path):
 
 from datetime import datetime as _dt
 NOW_M = _dt(2026, 11, 10, 6, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))
+
+
+def test_doctor_reports_feed_publisher_and_model_results(tmp_path):
+    from news import doctor
+    from test_news import make_net, fake_llm
+    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config" / "news_sources.yaml"))
+    cfg["feeds"] = cfg["feeds"][:6]
+    import news.doctor as d
+    orig = d.make_llm
+    d.make_llm = lambda *a, **k: fake_llm()
+    d.check_model = lambda c, s: [{"test": "model: plain call", "ok": True, "detail": "fake"}]
+    try:
+        res = doctor.run(cfg, {}, make_net(), lambda u, p=None: {}, workers=2)
+    finally:
+        d.make_llm = orig
+    assert res["summary"]["feeds_total"] == 6 and "articles_tested" in res["summary"]
+    assert isinstance(res["hosts"], list) and "<h1>Doctor" in doctor.to_html(res)
+
+
+def test_new_style_google_keys_are_gemini_not_anthropic():
+    from news.llm import detect_provider, make_llm
+    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config" / "news_sources.yaml"))
+    for k in ("AIzaSyABC", "AQ.Ab8RN6Jabcdef", "anything-else"):
+        assert detect_provider(k) == "gemini"
+    assert detect_provider("sk-ant-api03-x") == "anthropic"
+    assert make_llm(cfg, {"ANTHROPIC_API_KEY": "AQ.Ab8RN6Jabcdef"}, "extract", None).provider == "gemini"
