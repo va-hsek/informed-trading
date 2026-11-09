@@ -160,6 +160,15 @@ llm:
   # List prices in USD per million tokens, used for the cost estimate and the spending stop. Check Anthropic's pricing page and edit.
   price_input_per_mtok: 0.10       # Claude Haiku 5.5, prompts up to 100k tokens (platform.claude.com pricing page, checked 9 Nov 2026)
   price_output_per_mtok: 0.50
+  # Used instead when the key is a Google (Gemini) key (starts with AIza). Prices: ai.google.dev model pages, checked 10 Nov 2026; edit if they change.
+  gemini:
+    extract_model: gemini-3.5-flash-lite      # stable; default thinking level is minimal
+    price_input_per_mtok: 0.30
+    price_output_per_mtok: 2.50               # thinking tokens are billed as output and are counted
+    calendar_model: gemini-3.6-flash          # weekly job: a stronger model for the calendar
+    calendar_price_input_per_mtok: 1.50
+    calendar_price_output_per_mtok: 7.50
+    price_per_search: 0.014                   # Gemini 3+: first 5,000 searches a month free, then $14 per 1,000; counted at the full price here
 
 # Topic keywords (case-insensitive, whole-word). The first matching topic group decides the section.
 topics:

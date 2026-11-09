@@ -19,6 +19,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Build the news edition (uses the time it runs)
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python -m news.run_news
       - name: Save the edition and its data file

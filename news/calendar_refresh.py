@@ -24,7 +24,7 @@ import yaml
 from collectors.http import FetchError, get
 from news.articles import extract_text
 from news.claims import norm, numbers
-from news.llm import LLM
+from news.llm import LLM, make_llm
 
 IST = timezone(timedelta(hours=5, minutes=30))
 ROOT = Path(__file__).resolve().parent.parent
@@ -179,10 +179,9 @@ def ensure_fresh(root: Path, now: datetime, secrets: dict, cfg: dict, llm: Optio
         return ""
     cc = cfg.get("calendar_refresh") or {}
     if llm is None:
-        if not secrets.get("ANTHROPIC_API_KEY"):
-            return "Calendar is out of date and ANTHROPIC_API_KEY is not set, so it was not refreshed."
-        llm = LLM(secrets["ANTHROPIC_API_KEY"], cc.get("model", "claude-sonnet-5-5"), root / "data" / "llm_usage.jsonl",
-                  float(cc.get("price_input_per_mtok", 3.0)), float(cc.get("price_output_per_mtok", 15.0)))
+        llm = make_llm(cfg, secrets, "calendar", root / "data" / "llm_usage.jsonl")
+        if llm is None:
+            return "Calendar is out of date and no model API key is set, so it was not refreshed."
     try:
         r = refresh_calendar(root, now, llm, cc.get("search_tool_type", "web_search_20250305"), http_get)
         return f"Calendar refreshed automatically: {r['verified']} of {r['kept']} events verified against their source pages."
@@ -195,12 +194,11 @@ def main() -> int:
     now = datetime.now(IST)
     cfg = yaml.safe_load((ROOT / "config" / "news_sources.yaml").read_text())
     s = load_secrets()
-    if not s.get("ANTHROPIC_API_KEY"):
-        print("ANTHROPIC_API_KEY is not set in config/secrets.env")
-        return 1
     cc = cfg.get("calendar_refresh") or {}
-    llm = LLM(s["ANTHROPIC_API_KEY"], cc.get("model", "claude-sonnet-5-5"), ROOT / "data" / "llm_usage.jsonl",
-              float(cc.get("price_input_per_mtok", 3.0)), float(cc.get("price_output_per_mtok", 15.0)))
+    llm = make_llm(cfg, s, "calendar", ROOT / "data" / "llm_usage.jsonl")
+    if llm is None:
+        print("No model API key is set (GEMINI_API_KEY or ANTHROPIC_API_KEY)")
+        return 1
     r = refresh_calendar(ROOT, now, llm, cc.get("search_tool_type", "web_search_20250305"))
     print(json.dumps(r, indent=1))
     return 0

@@ -292,7 +292,7 @@ def test_end_to_end_report(tmp_path):
 
 def test_no_api_key_gives_headlines_only(tmp_path):
     md, meta = build_news_report(make_root(tmp_path), NOW, {}, make_net(), lambda u, p=None: {}, None)
-    assert "ANTHROPIC_API_KEY is not set" in md and meta["stats"]["claims_kept"] == 0
+    assert "No model API key is set" in md and meta["stats"]["claims_kept"] == 0
     assert "Gold edges higher" in md
 
 

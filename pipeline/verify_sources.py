@@ -19,7 +19,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 def main() -> int:
     secrets = load_secrets()
     print("Secrets present (names only):", ", ".join(sorted(secrets)) or "none")
-    for need in ("FRED_API_KEY", "EIA_API_KEY", "ANTHROPIC_API_KEY", "ALICEBLUE_USER_ID", "ALICEBLUE_API_KEY"):
+    for need in ("FRED_API_KEY", "EIA_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", "ALICEBLUE_USER_ID", "ALICEBLUE_API_KEY"):
         print(f"  {need}: {'set' if secrets.get(need) else 'MISSING'}")
     drivers = yaml.safe_load((ROOT / "config" / "drivers.yaml").read_text())["drivers"]
     now = datetime.now(IST)

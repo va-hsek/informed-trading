@@ -24,7 +24,7 @@ from news.articles import RobotsCache, read_article
 from news.claims import extract_claims
 from news.feeds import collect_items, edition_window, tag_topics
 from news.headline_search import find_alternative
-from news.llm import LLM
+from news.llm import LLM, make_llm
 from news.paper import (SECTIONS, Para, Source, Story, item_score, merge_stories, render_calendar, render_glance, render_story,
                         section_for)
 
@@ -77,11 +77,9 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
 
     llm_note = ""
     if llm is None:
-        if secrets.get("ANTHROPIC_API_KEY"):
-            llm = LLM(secrets["ANTHROPIC_API_KEY"], cfg["llm"]["extract_model"], root / "data" / "llm_usage.jsonl",
-                      cfg["llm"]["price_input_per_mtok"], cfg["llm"]["price_output_per_mtok"])
-        else:
-            llm_note = "ANTHROPIC_API_KEY is not set: articles were not read, so this edition lists headlines only."
+        llm = make_llm(cfg, secrets, "extract", root / "data" / "llm_usage.jsonl")
+        if llm is None:
+            llm_note = "No model API key is set (GEMINI_API_KEY or ANTHROPIC_API_KEY): articles were not read, so this edition lists headlines only."
 
     hs = lim.get("headline_search") or {}
     hs_on = bool(hs.get("enabled")) and llm is not None

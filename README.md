@@ -55,6 +55,10 @@ All reports are HTML only (`reports/*.html`). Each run reads whatever sources ar
 - Sectors section: 13 sector groups, tagged by keyword from the sector feeds.
 - Every claim must appear verbatim in the article text, with its numbers; otherwise it is dropped.
 
+### Model provider
+Either a Google Gemini key or an Anthropic key works. The key goes in the GitHub secret `GEMINI_API_KEY` (or the older name `ANTHROPIC_API_KEY`); a key that starts with `AIza` is treated as Gemini.
+Gemini uses `gemini-3.5-flash-lite` for reading and headline search (Google Search grounding), and `gemini-3.6-flash` for the weekly calendar. Models and prices are in `config/news_sources.yaml` under `llm.gemini`.
+
 ### Cost per run (Anthropic list prices, Nov 2026)
 Haiku 5.5 extraction about $0.0006 per article (max about $0.45), headline search about $0.011 each (150 searches about $1.65), weekly calendar refresh about $0.05/day.
 Typical $1-1.5/day, ceiling about $2.1/day. Actual spend is logged in `data/news_usage.jsonl` and printed in the run stats.

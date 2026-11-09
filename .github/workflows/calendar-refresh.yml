@@ -19,6 +19,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Refresh and verify config/calendar.yaml (events are dated from today forward)
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python -m news.calendar_refresh
       - name: Save the calendar

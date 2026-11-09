@@ -133,7 +133,7 @@ def test_ensure_fresh_skips_when_recent_and_never_raises(tmp_path):
     cfg = {"limits": {"calendar_review_max_age_days": 7}}
     assert cr.ensure_fresh(tmp_path, NOW, {}, cfg) == ""
     (tmp_path / "config" / "calendar.yaml").write_text(yaml.safe_dump({"last_reviewed": "2026-10-01", "events": []}))
-    assert "not set" in cr.ensure_fresh(tmp_path, NOW, {}, cfg)
+    assert "no model API key" in cr.ensure_fresh(tmp_path, NOW, {}, cfg)
     class Bad:
         def complete_with_search(self, *a, **k):
             raise RuntimeError("x")
@@ -236,3 +236,38 @@ def test_search_cost_is_counted():
     l = LLM("k", "m", None, 0.10, 0.50)
     l.search_count = 100
     assert abs(l.est_cost_usd() - 1.0) < 1e-9
+
+
+# ---------------- Gemini provider ----------------
+def test_gemini_provider_parses_usage_search_and_thoughts(tmp_path):
+    from news.llm import LLM, detect_provider, make_llm
+    assert detect_provider("AIzaSyXYZ") == "gemini" and detect_provider("sk-ant-1") == "anthropic"
+    seen = {}
+    def post(url, headers, body, timeout=90):
+        seen.update(url=url, headers=headers, body=body)
+        return {"candidates": [{"content": {"parts": [{"text": "hidden", "thought": True}, {"text": '{"ok": 1}'}]},
+                                "groundingMetadata": {"webSearchQueries": ["a", "b"]}}],
+                "usageMetadata": {"promptTokenCount": 1000, "candidatesTokenCount": 100, "thoughtsTokenCount": 50}}
+    l = LLM("AIzaKEY", "gemini-3.5-flash-lite", tmp_path / "u.jsonl", 0.30, 2.50, post=post)
+    l.price_per_search = 0.014
+    assert l.complete_with_search("sys", "user", "ignored") == '{"ok": 1}'
+    assert seen["url"].endswith("gemini-3.5-flash-lite:generateContent") and seen["headers"]["x-goog-api-key"] == "AIzaKEY"
+    assert seen["body"]["tools"] == [{"google_search": {}}] and seen["body"]["systemInstruction"]["parts"][0]["text"] == "sys"
+    assert (l.tokens_in, l.tokens_out, l.search_count) == (1000, 150, 2)
+    assert abs(l.est_cost_usd() - (1000 * 0.30 / 1e6 + 150 * 2.5 / 1e6 + 2 * 0.014)) < 1e-9
+    assert "AIzaKEY" not in (tmp_path / "u.jsonl").read_text()
+
+
+def test_gemini_empty_answer_fails_closed_and_factory_uses_prefix(tmp_path):
+    import pytest
+    from collectors.http import FetchError
+    from news.llm import LLM, make_llm
+    l = LLM("AIzaKEY", "m", None, 0, 0, post=lambda *a, **k: {"promptFeedback": {"blockReason": "SAFETY"}})
+    with pytest.raises(FetchError):
+        l.complete("s", "u")
+    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config" / "news_sources.yaml"))
+    g = make_llm(cfg, {"ANTHROPIC_API_KEY": "AIzaSomething"}, "extract", None)          # Google key in the Anthropic-named secret
+    assert g.provider == "gemini" and g.model == "gemini-3.5-flash-lite"
+    c = make_llm(cfg, {"ANTHROPIC_API_KEY": "sk-ant-x"}, "extract", None)
+    assert c.provider == "anthropic" and c.model == "claude-haiku-5-5"
+    assert make_llm(cfg, {}, "extract", None) is None
