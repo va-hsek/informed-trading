@@ -1,0 +1,70 @@
+{
+ "at": "2026-11-09T20:25:18.684770+00:00",
+ "results": [
+  {
+   "test": "model key",
+   "ok": true,
+   "detail": "provider=anthropic model=claude-haiku-5-5"
+  },
+  {
+   "test": "model: plain call",
+   "ok": false,
+   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
+  },
+  {
+   "test": "model: JSON mode",
+   "ok": false,
+   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
+  },
+  {
+   "test": "model: web search",
+   "ok": false,
+   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
+  },
+  {
+   "test": "fetch: BBC business feed",
+   "ok": true,
+   "detail": "39,058 bytes in 0.3s"
+  },
+  {
+   "test": "fetch: Economic Times feed",
+   "ok": true,
+   "detail": "40,020 bytes in 0.2s"
+  },
+  {
+   "test": "fetch: Mint feed",
+   "ok": true,
+   "detail": "39,283 bytes in 0.2s"
+  },
+  {
+   "test": "fetch: Moneycontrol feed",
+   "ok": false,
+   "detail": "HTTP 403 for https://www.moneycontrol.com/rss/business.xml"
+  },
+  {
+   "test": "fetch: RBI press releases",
+   "ok": true,
+   "detail": "165,038 bytes in 1.1s"
+  },
+  {
+   "test": "fetch: Wayback availability API",
+   "ok": true,
+   "detail": "193 bytes in 0.5s"
+  },
+  {
+   "test": "fetch: Memento aggregator",
+   "ok": false,
+   "detail": "URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/timemap/json/https://www.ft.com/"
+  },
+  {
+   "test": "fetch: archive.today",
+   "ok": false,
+   "detail": "URLError: <urlopen error _ssl.c:994: The handshake operation timed out> for https://archive.ph/newest/https://www.bbc.com/news"
+  },
+  {
+   "test": "fetch: Google News RSS",
+   "ok": true,
+   "detail": "199,547 bytes in 0.5s"
+  }
+ ]
+}
