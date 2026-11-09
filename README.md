@@ -55,6 +55,12 @@ All reports are HTML only (`reports/*.html`). Each run reads whatever sources ar
 - Sectors section: 13 sector groups, tagged by keyword from the sector feeds.
 - Every claim must appear verbatim in the article text, with its numbers; otherwise it is dropped.
 
+### Page layout and diagnostics
+The edition is a magazine page (`news/magazine.py`): lead story, "Today in five", market tiles, an Energy and metals desk, storylines grouped by jurisdiction or by sector
+(switch at the top), a week-ahead timeline, collapsed headlines and a collapsed Coverage and quality panel.
+Each run also writes `data/news/diagnostics.json` (model errors, top failure reasons, sample unreadable articles, failed feeds) and the pre-flight
+`data/news/selftest.json`; both are committed, so a failed run can be diagnosed from the repo.
+
 ### Model provider
 Either a Google Gemini key or an Anthropic key works. The key goes in the GitHub secret `GEMINI_API_KEY` (or the older name `ANTHROPIC_API_KEY`); a key that starts with `AIza` is treated as Gemini.
 Gemini uses `gemini-3.5-flash-lite` for reading and headline search (Google Search grounding), and `gemini-3.6-flash` for the weekly calendar. Models and prices are in `config/news_sources.yaml` under `llm.gemini`.

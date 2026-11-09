@@ -54,14 +54,16 @@ def parse_urls(raw: str) -> list[dict]:
 
 
 def find_alternative(title: str, original_url: str, llm, tool_type: str, robots: RobotsCache, http_get: Callable,
-                     min_chars: int = 150, max_chars: int = 12000, min_overlap: float = 0.5) -> Optional[dict]:
+                     min_chars: int = 150, max_chars: int = 12000, min_overlap: float = 0.5, errors: Optional[list] = None) -> Optional[dict]:
     """Returns {text, url, publisher} or None."""
     want = sig_words(title)
     if len(want) < 3:
         return None
     try:
         raw = llm.complete_with_search(SYSTEM, f"HEADLINE: {title}", tool_type, max_uses=2, max_tokens=500)
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        if errors is not None:
+            errors.append(f"{type(e).__name__}: {e}")
         return None
     for cand in parse_urls(raw):
         u = cand["url"]

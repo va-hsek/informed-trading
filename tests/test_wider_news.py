@@ -271,3 +271,70 @@ def test_gemini_empty_answer_fails_closed_and_factory_uses_prefix(tmp_path):
     c = make_llm(cfg, {"ANTHROPIC_API_KEY": "sk-ant-x"}, "extract", None)
     assert c.provider == "anthropic" and c.model == "claude-haiku-5-5"
     assert make_llm(cfg, {}, "extract", None) is None
+
+
+# ---------------- storylines and magazine page ----------------
+def _story(h, sec, regions, sectors, claims, score=5, topics=()):
+    from news.paper import Para, Source, Story
+    return Story(h, sec, list(topics), regions, "news", None, [Para(claims, Source("Outlet", "https://o.example/" + h[:5].replace(" ", "")))], sectors=sectors, score=score)
+
+
+def test_clustering_groups_related_and_splits_unrelated():
+    from news.cluster import cluster
+    a = _story("RBI holds repo rate steady amid food inflation", "India", ["india"], [], ["The RBI kept the repo rate at 5.50 percent."], 9)
+    b = _story("RBI repo rate decision lifts bank shares", "India", ["india"], [], ["Bank shares rose after the RBI repo rate decision."], 5)
+    c = _story("Tractor sales jump in festive season", "India", ["india"], [], ["Tractor makers reported higher festive sales."], 4)
+    cl = cluster([a, b, c])
+    assert len(cl) == 2 and cl[0].lead is a and cl[0].related == [b] and cl[1].lead is c
+
+
+def test_magazine_page_has_lenses_collapsed_headlines_and_no_unverified_text():
+    from news.magazine import render_magazine
+    from news.feeds import Item
+    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config" / "news_sources.yaml"))
+    st = [_story("RBI holds repo rate steady", "India", ["india"], ["Banks and finance"], ["The RBI kept the repo rate at 5.50 percent."], 9),
+          _story("Brent falls on Iran talks", "Energy and metals", [], [], ["Brent fell 4.9 percent to $93.54."], 8, topics=["crude"])]
+    it = Item("f", "news", "Unreadable headline here", "https://x.example/1", None, publisher="Pub")
+    stats = dict(read_direct=2, read_wayback=0, read_archive=0, read_search=0, read_partial=0, read_summary=0, unreadable=1, cost_stopped=0,
+                 extract_errors=0, claims_kept=2, claims_dropped=0)
+    page = render_magazine(NOW_M, st, [(it, "x")], stats, [{"feed": "F", "ok": False, "reason": "HTTP 403", "kept": 0}], [("reason", 3)],
+                           "", "", None, "", {}, cfg, lambda i: "")
+    assert "By jurisdiction" in page and "By sector" in page and "Energy and metals" in page
+    assert "The RBI kept the repo rate at 5.50 percent." in page and 'href="https://o.example/' in page
+    assert "<details><summary><h2>Coverage and quality</h2>" in page                      # collapsed by default
+    assert '<details class="hl">' in page and "Unreadable headline here" in page         # headlines behind a fold
+    assert "Model check failed" not in page
+
+
+def test_magazine_shows_model_failure_reason_at_the_top():
+    from news.magazine import render_magazine
+    cfg = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "config" / "news_sources.yaml"))
+    stats = dict(read_direct=0, read_wayback=0, read_archive=0, read_search=0, read_partial=0, read_summary=0, unreadable=0, cost_stopped=0,
+                 extract_errors=0, claims_kept=0, claims_dropped=0)
+    page = render_magazine(NOW_M, [], [], stats, [], [], "The model could not be reached: HTTP 400: API key not valid", "HTTP 400: API key not valid",
+                           None, "", {}, cfg, lambda i: "")
+    assert "Read this first" in page and "API key not valid" in page
+
+
+def test_run_stops_early_and_says_why_when_the_model_is_down(tmp_path):
+    from collectors.http import FetchError
+    from news.llm import LLM
+    from test_news import NOW as N2, make_net, make_root as mk
+    def dead(*a, **k): raise FetchError("model API call failed: HTTP 400: API key not valid")
+    md, meta = build_news_report(mk(tmp_path), N2, {"GEMINI_API_KEY": "AIzaDEAD"}, make_net(), lambda u, p=None: {}, None) if False else (None, None)
+    llm = LLM("AIzaDEAD", "m", None, 0, 0, post=dead)
+    class Once(LLM):
+        pass
+    import news.run_news as rn
+    orig = rn.make_llm
+    rn.make_llm = lambda *a, **k: llm
+    try:
+        md, meta = build_news_report(mk(tmp_path), N2, {"GEMINI_API_KEY": "AIzaDEAD"}, make_net(), lambda u, p=None: {}, None)
+    finally:
+        rn.make_llm = orig
+    assert "API key not valid" in md and meta["stats"]["claims_kept"] == 0
+    assert meta["diagnostics"]["llm_preflight_error"].endswith("API key not valid")
+
+
+from datetime import datetime as _dt
+NOW_M = _dt(2026, 11, 10, 6, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))

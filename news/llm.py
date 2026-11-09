@@ -19,21 +19,57 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:ge
 _LOCK = threading.Lock()
 
 
+def _api_message(e: urllib.error.HTTPError) -> str:
+    """The API's own error text (e.g. 'API key not valid', 'model not found', 'quota exceeded'). Never contains the key."""
+    try:
+        data = json.loads(e.read().decode("utf-8", "replace"))
+        err = data.get("error") if isinstance(data, dict) else None
+        if isinstance(err, dict):
+            return str(err.get("message") or err.get("status") or "")[:300]
+    except Exception:  # noqa: BLE001
+        pass
+    return ""
+
+
 def _post(url: str, headers: dict, body: dict, timeout: int = 90) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
     last = ""
-    for attempt in range(3):
+    for attempt in range(5):
+        wait = min(30, 2 ** attempt)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
-            last = f"HTTP {e.code}"
+            msg = _api_message(e)
+            last = f"HTTP {e.code}" + (f": {msg}" if msg else "")
             if e.code < 500 and e.code != 429:
                 break
+            try:
+                wait = min(60, max(wait, float(e.headers.get("Retry-After", 0))))
+            except (TypeError, ValueError):
+                pass
         except Exception as e:  # noqa: BLE001
             last = type(e).__name__
-        time.sleep(2 ** attempt)
-    raise FetchError(f"Anthropic API call failed: {last}")
+        time.sleep(wait)
+    raise FetchError(f"model API call failed: {last}")
+
+
+class _Pacer:
+    """Keeps all worker threads under a requests-per-minute limit so a free or low tier does not answer with 429s."""
+    def __init__(self, rpm: float):
+        self.gap = 60.0 / rpm if rpm else 0.0
+        self.next = 0.0
+        self.lock = threading.Lock()
+
+    def wait(self) -> None:
+        if not self.gap:
+            return
+        with self.lock:
+            now = time.monotonic()
+            at = max(now, self.next)
+            self.next = at + self.gap
+        if at > now:
+            time.sleep(at - now)
 
 
 class LLM:
@@ -41,12 +77,16 @@ class LLM:
                  price_in: float = 0.0, price_out: float = 0.0, post: Callable = _post, provider: Optional[str] = None):
         self.api_key, self.model, self.post = api_key, model, post
         self.provider = provider or detect_provider(api_key)
+        self.pacer = _Pacer(0)
         self.usage_log, self.price_in, self.price_out = usage_log, price_in, price_out
         self.tokens_in = self.tokens_out = 0
 
-    def complete(self, system: str, user: str, max_tokens: int = 800) -> str:
+    supports_json = True
+
+    def complete(self, system: str, user: str, max_tokens: int = 800, json_mode: bool = False) -> str:
+        self.pacer.wait()
         if self.provider == "gemini":
-            return self._gemini(system, user, max_tokens, search=False)
+            return self._gemini(system, user, max_tokens, search=False, json_mode=json_mode)
         body = {"model": self.model, "max_tokens": max_tokens, "system": system,
                 "messages": [{"role": "user", "content": user}]}
         headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
@@ -72,6 +112,7 @@ class LLM:
 
     def complete_with_search(self, system: str, user: str, tool_type: str, max_uses: int = 12, max_tokens: int = 4000) -> str:
         """Same call with the provider's server-side web search (Anthropic web_search tool, or Gemini Google Search grounding)."""
+        self.pacer.wait()
         if self.provider == "gemini":
             return self._gemini(system, user, max_tokens, search=True)
         body = {"model": self.model, "max_tokens": max_tokens, "system": system,
@@ -98,11 +139,13 @@ class LLM:
                                     "in": int(u.get("input_tokens", 0)), "out": int(u.get("output_tokens", 0)), "search": True}) + "\n")
         return text
 
-    def _gemini(self, system: str, user: str, max_tokens: int, search: bool) -> str:
+    def _gemini(self, system: str, user: str, max_tokens: int, search: bool, json_mode: bool = False) -> str:
         """Gemini generateContent over plain HTTPS. Thinking tokens are billed as output, so they are counted and given headroom."""
         body = {"systemInstruction": {"parts": [{"text": system}]},
                 "contents": [{"role": "user", "parts": [{"text": user}]}],
                 "generationConfig": {"maxOutputTokens": int(max_tokens) + GEMINI_THINKING_HEADROOM}}
+        if json_mode and not search:
+            body["generationConfig"]["responseMimeType"] = "application/json"
         if search:
             body["tools"] = [{"google_search": {}}]
         headers = {"x-goog-api-key": self.api_key, "content-type": "application/json"}
@@ -180,6 +223,7 @@ def make_llm(cfg: dict, secrets: dict, role: str, usage_log: Optional[Path]) -> 
     provider = detect_provider(key)
     model, pin, pout = model_settings(cfg, provider, role)
     llm = LLM(key, model, usage_log, pin, pout, provider=provider)
+    llm.pacer = _Pacer(float(((cfg.get("llm") or {}).get("requests_per_minute", 0))))
     if provider == "gemini":
         llm.price_per_search = float(((cfg.get("llm") or {}).get("gemini") or {}).get("price_per_search", 0.014))
     return llm

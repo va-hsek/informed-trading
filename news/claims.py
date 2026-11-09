@@ -14,19 +14,22 @@ import re
 from typing import Callable
 
 SYSTEM = (
-    "You extract facts from ONE news article for a trader's briefing. Reply with JSON only, no prose.\n"
+    "You turn ONE news article into a readable, fact-only briefing for an Indian retail trader who wants to read the news here and not "
+    "click through. Reply with JSON only, no prose.\n"
     'Schema: {"claims":[{"claim":"...","evidence":"..."}]}\n'
     "Rules:\n"
-    "- Use ONLY the article text. No outside knowledge, no inference, no combining separate facts.\n"
-    "- Each claim is one plain factual statement in your own words (not copied), at most 45 words, neutral tone. "
-    "Include the key numbers exactly as written in the article (prices, percentages, quantities, dates).\n"
-    "- Together the claims should tell most of the story in the order the article tells it: what happened, who, when, how much, "
-    "the stated reasons, reactions, and what is expected next. One claim per distinct fact.\n"
-    "- If the article reports an opinion, forecast or claim by someone, attribute it ('X says ...').\n"
+    "- Use ONLY the article text. No outside knowledge, no inference, no combining separate facts, no advice.\n"
+    "- Write 4 to 8 claims for a substantial article (1 to 3 for a short one). Together they must read as a short, complete account in the "
+    "order a reader needs it: what happened, who is involved, the key numbers, the stated reasons, reactions, and what happens next.\n"
+    "- Each claim stands alone and is understood without the headline: name the company, person, country, index or commodity every time "
+    "(never 'the company', 'it', 'the bank'). Include dates and the key numbers exactly as the article writes them: prices, percentages, "
+    "quantities, currencies, units, and the time period they refer to.\n"
+    "- One distinct fact per claim, at most 45 words, plain neutral wording in your own words (never copied). Attribute opinions, forecasts "
+    "and allegations ('Goldman Sachs expects ...', 'officials said ...').\n"
     '- "evidence" must be an EXACT excerpt of 6 to 25 consecutive words copied character for character from the article '
-    "that supports the claim.\n"
-    "- Prefer facts about prices, supply, demand, policy decisions, central banks, rates, currencies, inventories and data releases. "
-    "Skip commentary with no checkable fact.\n"
+    "that supports that claim.\n"
+    "- Prefer facts about prices, supply and demand, policy decisions, central banks, rates, currencies, earnings, deals, inventories, "
+    "regulation and data releases. Skip adverts, subscription prompts, author notes and commentary with no checkable fact.\n"
     '- If there is nothing usable return {"claims":[]}.'
 )
 
@@ -97,7 +100,8 @@ def extract_claims(llm, title: str, text: str, max_claims: int, retries: int = 1
     err = ""
     for _ in range(retries + 1):
         try:
-            raw = llm.complete(SYSTEM, build_user(title, text, max_claims), max_tokens=700)
+            kw = {"json_mode": True} if getattr(llm, "supports_json", False) else {}
+            raw = llm.complete(SYSTEM, build_user(title, text, max_claims), max_tokens=1600, **kw)
             cands = parse_claims(raw)
             break
         except (ValueError, json.JSONDecodeError) as e:

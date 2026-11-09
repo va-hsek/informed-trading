@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import threading
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Optional
@@ -25,11 +28,26 @@ from news.claims import extract_claims
 from news.feeds import collect_items, edition_window, tag_topics
 from news.headline_search import find_alternative
 from news.llm import LLM, make_llm
+from news.magazine import render_magazine
 from news.paper import (SECTIONS, Para, Source, Story, item_score, merge_stories, render_calendar, render_glance, render_story,
                         section_for)
 
 IST = timezone(timedelta(hours=5, minutes=30))
 ROOT = Path(__file__).resolve().parent.parent
+
+
+BROWSER_HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 informed-trading/1.0",
+                   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-IN,en;q=0.9"}
+
+
+def news_get(url: str, params=None, headers=None, **kw) -> bytes:
+    """Feeds and articles are fetched with a normal browser identity: many Indian and US publishers answer 403 to unknown clients.
+    robots.txt is still honoured by the reader."""
+    return get(url, params, {**BROWSER_HEADERS, **(headers or {})}, **kw)
+
+
+def _reason_key(why: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"https?://\S+", "<url>", why or "no reason recorded"))[:140]
 
 
 def _d(dt: Optional[datetime]) -> str:
@@ -63,7 +81,7 @@ def _archive(it) -> str:
     return "https://archive.ph/newest/" + it.origin_url if (it.paywalled and it.origin_url) else ""
 
 
-def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callable = get, http_json: Callable = get_json,
+def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callable = news_get, http_json: Callable = get_json,
                       llm: Optional[LLM] = None) -> tuple[str, dict]:
     cfg = yaml.safe_load((root / "config" / "news_sources.yaml").read_text())
     lim = cfg["limits"]
@@ -76,10 +94,22 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
         it.sectors = tag_topics(it, cfg.get("sectors") or {})
 
     llm_note = ""
+    made_here = False
     if llm is None:
+        made_here = True
         llm = make_llm(cfg, secrets, "extract", root / "data" / "llm_usage.jsonl")
         if llm is None:
             llm_note = "No model API key is set (GEMINI_API_KEY or ANTHROPIC_API_KEY): articles were not read, so this edition lists headlines only."
+
+    llm_error = ""
+    if llm is not None and made_here:
+        try:                                              # one tiny call first: if the model is unreachable, say exactly why and do not burn 900 calls
+            llm.complete("Reply with exactly: {\"ok\": true}", "ping", max_tokens=20)
+        except Exception as e:  # noqa: BLE001
+            llm_error = f"{type(e).__name__}: {e}"
+            llm_note = (f"The model could not be reached, so no article was read. Reason from the API: {llm_error}. "
+                        "Headlines are listed instead. Fix the key, model name or quota and run again.")
+            llm = None
 
     hs = lim.get("headline_search") or {}
     hs_on = bool(hs.get("enabled")) and llm is not None
@@ -93,7 +123,10 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     stories: list[Story] = []
     unread: list[tuple] = []
     drops: list[str] = []
-    import threading
+    reasons: Counter = Counter()
+    samples: list[dict] = []
+    search_errors: list[str] = []
+    brk = {"ok": 0, "errs": 0, "last": ""}
     from concurrent.futures import ThreadPoolExecutor
     lock = threading.Lock()
     hs_box = {"left": hs_left}
@@ -106,6 +139,8 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
             return "unread", "model not configured"
         if llm.est_cost_usd() >= max_cost:
             return "cost", f"spending stop reached (${max_cost:.2f} per run)"
+        if brk["ok"] == 0 and brk["errs"] >= 10:
+            return "error", f"stopped early: the first {brk['errs']} model calls all failed (last: {brk['last']})"
         art = read_article(it, robots, http_get, http_json, lim["min_article_chars"], lim["max_article_chars"])
         alt = None
         if (not art["text"] or art.get("partial")) and hs_on:
@@ -114,12 +149,18 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
                 hs_box["left"] -= 1 if go else 0
             if go:
                 alt = find_alternative(it.title, it.origin_url or it.link, llm, hs.get("tool_type", "web_search_20250305"), robots, http_get,
-                                       lim["min_article_chars"], lim["max_article_chars"])
+                                       lim["min_article_chars"], lim["max_article_chars"], errors=search_errors)
         if alt:
             art = {"text": alt["text"], "via": "headline search", "snapshot_date": None, "reason": "", "alt": alt}
         if not art["text"]:
             return "unreadable", art["reason"]
         kept, dropped, err = extract_claims(llm, it.title, art["text"], lim["max_claims_per_article"])
+        with lock:
+            if err:
+                brk["errs"] += 1
+                brk["last"] = err[:200]
+            else:
+                brk["ok"] += 1
         if err:
             return "error", err
         return "ok", (art, kept, dropped)
@@ -136,9 +177,13 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
         elif kind == "unreadable":
             stats["unreadable"] += 1
             unread.append((it, payload))
+            reasons["not readable: " + _reason_key(payload)] += 1
+            if len(samples) < 40:
+                samples.append({"source": it.publisher or it.source, "title": it.title[:100], "reason": (payload or "")[:300]})
         elif kind == "error":
             stats["extract_errors"] += 1
             unread.append((it, f"claim extraction failed: {payload}"))
+            reasons["model step failed: " + _reason_key(payload)] += 1
         else:
             art, kept, dropped = payload
             stats[via_stat[art["via"]]] += 1
@@ -243,6 +288,14 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
               "headlines": [{"headline": it.title, "topics": it.topics, "regions": it.regions, "sectors": it.sectors, "source": it.publisher or it.source, "url": it.link}
                             for it, _ in hl]}
     meta["latest"] = latest
+    meta["diagnostics"] = {"generated": now.isoformat(), "provider": getattr(llm, "provider", None), "model": getattr(llm, "model", None),
+                           "llm_preflight_error": llm_error, "stats": stats,
+                           "top_failure_reasons": reasons.most_common(15), "unreadable_samples": samples,
+                           "headline_search_errors": [_reason_key(x) for x in search_errors[:10]],
+                           "feed_failures": [{"feed": c["feed"], "reason": c["reason"][:160]} for c in coverage if not c["ok"]]}
+    meta["mag"] = {"now": now, "stories": stories, "unread": hl, "stats": stats, "coverage": coverage, "reasons": reasons.most_common(12),
+                   "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg,
+                   "archive": _archive}
     return "\n".join(L) + "\n", meta
 
 
@@ -254,10 +307,16 @@ def main(argv=None) -> int:
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     stem = f"news_{now:%Y-%m-%d_%H%M}"
-    (out / f"{stem}.html").write_text(md_to_html(md, f"The Morning Edition {now:%d %b %Y}"))
+    try:
+        page = render_magazine(**meta["mag"])
+    except Exception as e:  # noqa: BLE001                                   # never lose the edition because of a layout bug: fall back to the plain page
+        print(f"magazine layout failed ({type(e).__name__}: {e}); wrote the plain layout instead")
+        page = md_to_html(md, f"The Morning Edition {now:%d %b %Y}")
+    (out / f"{stem}.html").write_text(page)
     nd = ROOT / "data" / "news"
     nd.mkdir(parents=True, exist_ok=True)
     (nd / "latest.json").write_text(json.dumps(meta["latest"], indent=1))
+    (nd / "diagnostics.json").write_text(json.dumps(meta["diagnostics"], indent=1, default=str))
     print(f"wrote reports/{stem}.html  ({meta['stories']} stories, {meta['sources']} sources, {meta['stats']['claims_kept']} claims)")
     return 0
 

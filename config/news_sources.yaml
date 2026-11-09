@@ -139,7 +139,8 @@ limits:
   max_stories_per_section: 42        # default cap; see section_caps for the regions you care most about
   calendar_horizon_days: 21
   calendar_review_max_age_days: 7
-  in_brief_max: 450                # headlines listed without a summary
+  in_brief_max: 450                # headlines listed without a summary (collapsed in the page)
+  cluster_cap_per_section: 8        # storylines shown per region or sector; the rest sit behind a "more" fold
   # Per-section printed-story caps: India, USA and Europe get most room; the rest show only the most important/trending.
   section_caps: {"India": 120, "USA and Americas": 120, "Europe": 120, "Markets and macro": 75, "Energy and metals": 60, "Tech and AI": 48,
                  "Deals and corporate": 48, "Asia-Pacific": 30, "Middle East": 30, "Official releases": 36, "Sectors": 240}
@@ -161,6 +162,7 @@ llm:
   price_input_per_mtok: 0.10       # Claude Haiku 5.5, prompts up to 100k tokens (platform.claude.com pricing page, checked 9 Nov 2026)
   price_output_per_mtok: 0.50
   # Used instead when the key is a Google (Gemini) key (starts with AIza). Prices: ai.google.dev model pages, checked 10 Nov 2026; edit if they change.
+  requests_per_minute: 30          # all workers together; the pacer waits instead of letting the API answer 429
   gemini:
     extract_model: gemini-3.5-flash-lite      # stable; default thinking level is minimal
     price_input_per_mtok: 0.30
