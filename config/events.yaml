@@ -1,0 +1,11 @@
+# Scheduled event calendar. The report warns when an event is near.
+# Dates/times are NOT hardcoded from memory: fill from official calendars
+# (Fed, BLS, EIA, RBI, OPEC). Times in IST, ISO-8601.
+
+events: []
+# Example entry (illustrative format only, not a real date):
+# - name: "US CPI"
+#   at: "2026-12-10T19:00:00+05:30"
+#   affects: [gold, silver, crude]
+#   source_url: "https://www.bls.gov/schedule/news_release/cpi.htm"
+#   warn_hours_before: 12

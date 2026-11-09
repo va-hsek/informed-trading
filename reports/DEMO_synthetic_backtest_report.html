@@ -1,0 +1,205 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Backtest report: SYNTHETIC DEMO ONLY (planted signal, not real data)</title><style>
+:root{color-scheme:light dark}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;margin:0 auto;max-width:46rem;padding:1rem 16px 3rem;
+background:#fff;color:#1a1a1a}
+h1{font-size:1.5rem}h2{font-size:1.25rem;margin-top:2rem;border-bottom:1px solid #8884;padding-bottom:.3rem}
+h3{font-size:1.05rem;margin-top:1.4rem}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;font-size:.9rem}
+th,td{border:1px solid #8886;padding:.35rem .55rem;text-align:left;vertical-align:top}
+blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:4px solid #888;background:#8881}
+code{background:#8882;padding:0 .25rem;border-radius:3px}
+a{word-break:break-word}
+@media (prefers-color-scheme:dark){body{background:#121212;color:#e8e8e8}a{color:#8ab4f8}}
+</style></head><body><h1>Backtest report: SYNTHETIC DEMO ONLY (planted signal, not real data)</h1>
+<p>Window: 2020-01-01 to 2025-12-31. Daily bars. Assets tested: gold.</p>
+<blockquote>
+<p>Hit-rate: price at the horizon end vs the next-session open, in the called direction. Independent calls: overlapping calls on the same asset are collapsed to the first one. Net expectancy is a percentage of entry price per trade after an ASSUMED round-trip cost of 0.10% (tick sizes and charges are not verified; see docs). Past results do not promise future results.</p>
+</blockquote>
+<h2>Not backtestable / missing</h2>
+<ul>
+<li>SYNTHETIC DEMO: invented prices and yields with a planted relationship. These numbers say nothing about real markets.</li>
+</ul>
+<h2>Driver data availability (days with a valid observation)</h2>
+<ul>
+<li>us10y_real_5d_chg_pp: 1566</li>
+<li>us2y_5d_chg_pp: 1566</li>
+</ul>
+<h2>tune A, test B</h2>
+<p>Tuned parameters (frozen before the test run, hash 82128a1f22fa): T1: {'t': 1.25}</p>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Independent calls</th>
+<th>Direction hit-rate</th>
+<th>95% Wilson low</th>
+<th>ATR stop touched</th>
+<th>Net expectancy per trade</th>
+<th>Profit factor</th>
+<th>Max drawdown</th>
+<th>No-view days</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tuning cycle (in-sample)</td>
+<td>66</td>
+<td>81.8%</td>
+<td>70.9%</td>
+<td>14%</td>
+<td>+5.43%</td>
+<td>29.12</td>
+<td>4.8%</td>
+<td>65%</td>
+</tr>
+<tr>
+<td>Test cycle (out-of-sample)</td>
+<td>63</td>
+<td>71.4%</td>
+<td>59.3%</td>
+<td>29%</td>
+<td>+3.97%</td>
+<td>8.55</td>
+<td>5.7%</td>
+<td>67%</td>
+</tr>
+</tbody>
+</table>
+<p>Out-of-sample by asset:</p>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Calls</th>
+<th>Hit-rate</th>
+<th>Wilson low</th>
+<th>Net expectancy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gold</td>
+<td>63</td>
+<td>71.4%</td>
+<td>59.3%</td>
+<td>+3.97%</td>
+</tr>
+</tbody>
+</table>
+<p>Out-of-sample by technical agreement label:</p>
+<ul>
+<li>ALIGNED: 9 calls, hit-rate 88.9%, net expectancy +4.73%</li>
+<li>CONFLICTING: 54 calls, hit-rate 68.5%, net expectancy +3.84%</li>
+</ul>
+<h2>tune B, test A (reverse)</h2>
+<p>Tuned parameters (frozen before the test run, hash d883eb5bc605): T1: {'t': 0.75}</p>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Independent calls</th>
+<th>Direction hit-rate</th>
+<th>95% Wilson low</th>
+<th>ATR stop touched</th>
+<th>Net expectancy per trade</th>
+<th>Profit factor</th>
+<th>Max drawdown</th>
+<th>No-view days</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tuning cycle (in-sample)</td>
+<td>65</td>
+<td>72.3%</td>
+<td>60.4%</td>
+<td>29%</td>
+<td>+3.78%</td>
+<td>8.01</td>
+<td>5.7%</td>
+<td>65%</td>
+</tr>
+<tr>
+<td>Test cycle (out-of-sample)</td>
+<td>67</td>
+<td>77.6%</td>
+<td>66.3%</td>
+<td>18%</td>
+<td>+5.14%</td>
+<td>18.08</td>
+<td>7.0%</td>
+<td>62%</td>
+</tr>
+</tbody>
+</table>
+<p>Out-of-sample by asset:</p>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Calls</th>
+<th>Hit-rate</th>
+<th>Wilson low</th>
+<th>Net expectancy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gold</td>
+<td>67</td>
+<td>77.6%</td>
+<td>66.3%</td>
+<td>+5.14%</td>
+</tr>
+</tbody>
+</table>
+<p>Out-of-sample by technical agreement label:</p>
+<ul>
+<li>ALIGNED: 10 calls, hit-rate 100.0%, net expectancy +7.26%</li>
+<li>CONFLICTING: 57 calls, hit-rate 73.7%, net expectancy +4.77%</li>
+</ul>
+<h2>Calibration (pre-registration section 5)</h2>
+<p>Out-of-sample calls only: Cycle B calls come from the model tuned on A, Cycle A calls from the model tuned on B.</p>
+<table>
+<thead>
+<tr>
+<th>Agreement band</th>
+<th>Cycle A calls</th>
+<th>A hit-rate</th>
+<th>Cycle B calls</th>
+<th>B hit-rate</th>
+<th>B Wilson low</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.70-0.80</td>
+<td>0</td>
+<td>n/a</td>
+<td>0</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>UNCALIBRATED: fewer than 30 independent calls in at least one cycle</td>
+</tr>
+<tr>
+<td>0.80-0.90</td>
+<td>0</td>
+<td>n/a</td>
+<td>0</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>UNCALIBRATED: fewer than 30 independent calls in at least one cycle</td>
+</tr>
+<tr>
+<td>0.90-1.00</td>
+<td>67</td>
+<td>77.6%</td>
+<td>63</td>
+<td>71.4%</td>
+<td>59.3%</td>
+<td>CALIBRATED &gt;= 70%: meets the pre-registered test in both cycles</td>
+</tr>
+</tbody>
+</table>
+<p>Weakness stated up front: adjacent months share market regimes, so Cycle B is a soft out-of-sample test. Forward paper-trading is the real validation.</p></body></html>

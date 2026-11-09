@@ -1,0 +1,38 @@
+name: Morning Edition
+on:
+  schedule:
+    - cron: "0 0 * * *"        # 00:00 UTC = 05:30 IST, every day. GitHub may start it up to ~15 minutes late.
+  workflow_dispatch: {}          # lets you run it by hand from the Actions tab
+permissions:
+  contents: write
+concurrency:
+  group: informed-trading-commits
+  cancel-in-progress: false
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements.txt
+      - name: Build the news edition (uses the time it runs)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m news.run_news
+      - name: Save the edition and its data file
+        run: |
+          git config user.name "informed-trading-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add reports/*.html
+          git add -f data/news/latest.json || true
+          git add config/calendar.yaml || true
+          git diff --cached --quiet || git commit -m "Morning Edition $(TZ=Asia/Kolkata date +'%Y-%m-%d %H:%M IST')"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: morning-edition
+          path: reports/news_*.html
+          retention-days: 30

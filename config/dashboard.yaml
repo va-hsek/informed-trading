@@ -1,0 +1,35 @@
+# Market dashboard rows for the action report ("Markets at a glance") and the news report.
+# source:  fred:<SERIES>   FRED series (all listed here were checked on 2026-11-09, see docs/source_verification.md)
+#          price:<key>     instrument key from config/instruments.yaml (stored Alice Blue candles)
+#          csv:<name>      data/prices/index/<name>.csv with columns date,open,high,low,close (you supply or Alice Blue refresh)
+#          manual:<name>   value you enter in config/manual_inputs.yaml under dashboard_manual
+# kind: price  -> change shown in %      yield -> change shown in percentage points
+# max_age_days: older data is shown as "n/a (newest data N days old)", never as current.
+# Nothing here is a recommendation.
+groups:
+  Energy:
+    - {label: "Brent crude (US$/bbl)",        source: "fred:DCOILBRENTEU", kind: price, max_age_days: 6, note: "EIA daily spot via FRED; lags 1-3 days"}
+    - {label: "WTI crude (US$/bbl)",          source: "fred:DCOILWTICO",   kind: price, max_age_days: 6, note: "EIA daily spot via FRED; lags 1-3 days"}
+    - {label: "Henry Hub gas (US$/mmBtu)",    source: "fred:DHHNGSP",      kind: price, max_age_days: 6, note: "EIA daily spot via FRED; lags 1-3 days"}
+    - {label: "MCX crude mini (INR/bbl)",     source: "price:crude_mini",  kind: price, max_age_days: 5, note: "your stored MCX candles"}
+    - {label: "MCX natural gas mini (INR/mmBtu)", source: "price:natgas_mini", kind: price, max_age_days: 5, note: "your stored MCX candles"}
+  Metals:
+    - {label: "MCX gold ten (INR/10 g)",      source: "price:gold_ten",    kind: price, max_age_days: 5, note: "your stored MCX candles"}
+    - {label: "MCX silver micro (INR/kg)",    source: "price:silver_micro", kind: price, max_age_days: 5, note: "your stored MCX candles"}
+  "FX and dollar":
+    - {label: "Broad US dollar index",        source: "fred:DTWEXBGS",     kind: price, max_age_days: 7, note: "Fed trade-weighted index; lags about a week"}
+    - {label: "USDINR (INR per USD)",         source: "fred:DEXINUS",      kind: price, max_age_days: 7, note: "Fed H.10 noon NY rate; lags about a week"}
+  "Rates and debt":
+    - {label: "US 10-year yield (%)",         source: "fred:DGS10",        kind: yield, max_age_days: 6}
+    - {label: "US 2-year yield (%)",          source: "fred:DGS2",         kind: yield, max_age_days: 6}
+    - {label: "US 10-year real yield (%)",    source: "fred:DFII10",       kind: yield, max_age_days: 6}
+    - {label: "US 10y minus 2y spread (pp)",  source: "fred:T10Y2Y",       kind: yield, max_age_days: 6}
+    - {label: "US high-yield spread (pp)",    source: "fred:BAMLH0A0HYM2", kind: yield, max_age_days: 6}
+    - {label: "Fed funds effective (%)",      source: "fred:DFF",          kind: yield, max_age_days: 6}
+    - {label: "India 10-year G-sec yield (%)", source: "manual:india_10y",  kind: yield, max_age_days: 7, note: "no free verified feed; enter it yourself"}
+  "Equity and volatility":
+    - {label: "S&P 500",                      source: "fred:SP500",        kind: price, max_age_days: 6, note: "FRED licence limits history; lags 1 day"}
+    - {label: "CBOE VIX",                     source: "fred:VIXCLS",       kind: price, max_age_days: 6}
+    - {label: "Nifty 50",                     source: "csv:nifty50",       kind: price, max_age_days: 5, note: "supply data/prices/index/nifty50.csv"}
+    - {label: "Sensex",                       source: "csv:sensex",        kind: price, max_age_days: 5, note: "supply data/prices/index/sensex.csv"}
+    - {label: "India VIX",                    source: "csv:indiavix",      kind: price, max_age_days: 5, note: "supply data/prices/index/indiavix.csv"}

@@ -1,0 +1,390 @@
+# Driver registry: the ONLY place direction logic lives.
+#
+# The report prints, for every driver:   Data point -> Rule -> Today vs rule -> Rationale
+# so reading this file tells you exactly why the report says what it says.
+#
+# STATUS: STARTER SET. Thresholds and weights are UNTUNED. They are tuned ONLY on
+# Cycle A of the backtest (docs/backtest_preregistration.md), then frozen.
+# source.status:
+#   verified   = series/route/units confirmed against the provider (docs/source_verification.md).
+#                The collector still re-checks the response shape on every run.
+#   to_verify  = NOT confirmed. The driver is excluded from scoring and listed in Data Quality.
+#
+# Fields
+#   label           plain name of the data point
+#   metric_phrase   how the number is built (used in "IF <phrase> > x")
+#   unit            suffix printed after thresholds ("%", " pp", " mb", "")
+#   weight          relative importance (>0), flag_only drivers use 0
+#   rules[].effects asset -> signed multiplier in [-1,1]; + bullish, - bearish
+#   rules[].why     asset -> the reason the rule makes sense (shown in the report)
+#   horizon         intraday | swing (2-10 trading days) | positional (weeks+)
+#   stale_after_hours  older observations are EXCLUDED, never guessed
+
+version: 1
+
+drivers:
+
+  - id: R01
+    label: Broad US dollar index
+    metric: usd_broad_5d_pct
+    metric_phrase: "5-observation % change in the broad US dollar index"
+    unit: "%"
+    source: {provider: fred, series: DTWEXBGS, status: verified,
+             lag_note: "Fed H.10 weekly release: data can be about a week old. Trade-weighted broad index, NOT the ICE DXY."}
+    weight: 1.0
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - op: ">"
+        threshold: 0.5
+        effects: {gold: -1, silver: -1, crude: -0.5}
+        why:
+          gold: "Gold is priced in US dollars. A stronger dollar makes it dearer for buyers holding other currencies, which tends to reduce demand and weigh on the price."
+          silver: "Silver is priced in US dollars. A stronger dollar makes it dearer for buyers holding other currencies, which tends to reduce demand and weigh on the price."
+          crude: "Crude is priced in US dollars. A stronger dollar tends to dampen demand outside the US."
+      - op: "<"
+        threshold: -0.5
+        effects: {gold: 1, silver: 1, crude: 0.5}
+        why:
+          gold: "A weaker dollar makes dollar-priced gold cheaper for other-currency buyers, which tends to support demand and the price."
+          silver: "A weaker dollar makes dollar-priced silver cheaper for other-currency buyers, which tends to support demand and the price."
+          crude: "A weaker dollar makes dollar-priced crude cheaper for other-currency buyers, which tends to support demand."
+
+  - id: R02
+    label: US 10-year real yield (TIPS)
+    metric: us10y_real_5d_chg_pp
+    metric_phrase: "5-observation change in the US 10-year real yield"
+    unit: " pp"
+    source: {provider: fred, series: DFII10, status: verified}
+    weight: 1.2
+    horizon: swing
+    stale_after_hours: 120
+    rules:
+      - op: ">"
+        threshold: 0.10
+        effects: {gold: -1, silver: -0.8}
+        why:
+          gold: "The real yield is what Treasuries pay after inflation. Gold pays no interest, so a higher real yield raises the opportunity cost of holding it, which tends to weigh on the price."
+          silver: "The real yield is what Treasuries pay after inflation. Silver pays no interest, so a higher real yield raises the opportunity cost of holding it, which tends to weigh on the price."
+      - op: "<"
+        threshold: -0.10
+        effects: {gold: 1, silver: 0.8}
+        why:
+          gold: "A falling real yield lowers the opportunity cost of holding non-interest-paying gold, which tends to support the price."
+          silver: "A falling real yield lowers the opportunity cost of holding non-interest-paying silver, which tends to support the price."
+
+  - id: R03
+    label: US 2-year Treasury yield
+    metric: us2y_5d_chg_pp
+    metric_phrase: "5-observation change in the US 2-year yield"
+    unit: " pp"
+    source: {provider: fred, series: DGS2, status: verified}
+    weight: 0.8
+    horizon: swing
+    stale_after_hours: 120
+    rules:
+      - op: ">"
+        threshold: 0.10
+        effects: {gold: -0.7, silver: -0.7}
+        why:
+          gold: "The 2-year yield tracks expected Fed policy. A rise signals tighter expected policy, which tends to lift the dollar and the opportunity cost of holding gold."
+          silver: "The 2-year yield tracks expected Fed policy. A rise signals tighter expected policy, which tends to lift the dollar and the opportunity cost of holding silver."
+      - op: "<"
+        threshold: -0.10
+        effects: {gold: 0.7, silver: 0.7}
+        why:
+          gold: "A fall in the 2-year yield signals easier expected policy, which tends to ease the dollar and the opportunity cost of holding gold."
+          silver: "A fall in the 2-year yield signals easier expected policy, which tends to ease the dollar and the opportunity cost of holding silver."
+
+  - id: R04
+    label: USDINR (rupees per US dollar)
+    metric: usdinr_5d_pct
+    metric_phrase: "5-observation % change in USDINR"
+    unit: "%"
+    source: {provider: fred, series: DEXINUS, status: verified,
+             lag_note: "Fed H.10 weekly release: can be about a week old. A live USDINR needs NSE currency (CDS) data or a market-data API."}
+    weight: 0.8
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - op: ">"
+        threshold: 0.3
+        effects: {gold: 1, silver: 1, crude: 1}
+        why:
+          gold: "MCX prices are in rupees. The rupee price of gold is roughly the dollar price times USDINR (plus duty and premium), so a weaker rupee lifts the domestic price even if the dollar price is flat."
+          silver: "MCX prices are in rupees. The rupee price of silver is roughly the dollar price times USDINR (plus duty and premium), so a weaker rupee lifts the domestic price even if the dollar price is flat."
+          crude: "MCX crude is priced in rupees off a dollar benchmark, so a weaker rupee lifts the domestic price even if the dollar price is flat."
+      - op: "<"
+        threshold: -0.3
+        effects: {gold: -1, silver: -1, crude: -1}
+        why:
+          gold: "A stronger rupee lowers the rupee price of dollar-priced gold even if the dollar price is flat."
+          silver: "A stronger rupee lowers the rupee price of dollar-priced silver even if the dollar price is flat."
+          crude: "A stronger rupee lowers the rupee price of dollar-priced crude even if the dollar price is flat."
+
+  - id: R05
+    label: US commercial crude stocks vs seasonal 5-year average
+    metric: eia_crude_stocks_vs_5y_pct
+    metric_phrase: "% deviation of US commercial crude stocks from the 5-year same-week average"
+    unit: "%"
+    source: {provider: eia, route: "petroleum/stoc/wstk", series: WCESTUS1, status: verified}
+    weight: 1.0
+    horizon: swing
+    stale_after_hours: 336
+    rules:
+      - op: "<"
+        threshold: -2.0
+        effects: {crude: 1}
+        why:
+          crude: "Stocks below the seasonal 5-year average mean supply is tighter than normal, which tends to support prices."
+      - op: ">"
+        threshold: 2.0
+        effects: {crude: -1}
+        why:
+          crude: "Stocks above the seasonal 5-year average mean a supply cushion, which tends to weigh on prices."
+
+  - id: R06
+    label: US crude weekly stock change vs seasonal norm
+    metric: eia_crude_weekly_chg_vs_5y_mb
+    metric_phrase: "this week's US crude stock change minus the 5-year same-week average change"
+    unit: " mb"
+    source: {provider: eia, route: "petroleum/stoc/wstk", series: WCESTUS1, status: verified,
+             note: "Consensus forecasts are not free, so surprise is measured against the seasonal norm, not analysts."}
+    weight: 0.6
+    horizon: intraday
+    stale_after_hours: 336
+    rules:
+      - op: "<"
+        threshold: -2.0
+        effects: {crude: 1}
+        why:
+          crude: "A weekly draw bigger than the seasonal norm points to stronger demand or weaker supply than usual, which tends to support prices."
+      - op: ">"
+        threshold: 2.0
+        effects: {crude: -1}
+        why:
+          crude: "A weekly build bigger than the seasonal norm points to weaker demand or stronger supply than usual, which tends to weigh on prices."
+
+  - id: R07
+    label: Brent futures curve slope
+    metric: brent_curve_slope_pct
+    metric_phrase: "(front month - third month) / third month Brent futures"
+    unit: "%"
+    source: {provider: to_decide, status: to_verify,
+             note: "No free verified source for the futures curve. Needs a low-cost market-data API."}
+    weight: 0.9
+    horizon: swing
+    stale_after_hours: 72
+    rules:
+      - op: ">"
+        threshold: 0.5
+        effects: {crude: 1}
+        why: {crude: "A backwardated curve (near month above later months) usually signals tight prompt supply."}
+      - op: "<"
+        threshold: -0.5
+        effects: {crude: -1}
+        why: {crude: "A contango curve (near month below later months) usually signals ample prompt supply."}
+
+  - id: R08
+    label: Copper, 20-observation change
+    metric: copper_20d_pct
+    metric_phrase: "20-observation % change in copper"
+    unit: "%"
+    source: {provider: to_decide, status: to_verify}
+    weight: 0.7
+    horizon: positional
+    stale_after_hours: 96
+    rules:
+      - op: ">"
+        threshold: 3.0
+        effects: {silver: 1, crude: 0.6}
+        why:
+          silver: "Copper is a gauge of industrial demand and silver has large industrial use."
+          crude: "Copper is a gauge of global growth, which also drives fuel demand."
+      - op: "<"
+        threshold: -3.0
+        effects: {silver: -1, crude: -0.6}
+        why:
+          silver: "Falling copper signals weaker industrial demand, and silver has large industrial use."
+          crude: "Falling copper signals weaker global growth, which also drives fuel demand."
+
+  - id: R09
+    label: CBOE VIX (US equity volatility)
+    metric: vix_level
+    metric_phrase: "VIX closing level"
+    unit: ""
+    source: {provider: fred, series: VIXCLS, status: verified,
+             note: "FRED marks this series copyrighted: citation required (CBOE)."}
+    weight: 0.5
+    horizon: swing
+    stale_after_hours: 120
+    rules:
+      - op: ">"
+        threshold: 25
+        effects: {gold: 0.6, crude: -0.6}
+        why:
+          gold: "A high VIX reflects risk aversion; gold often attracts safe-haven demand then."
+          crude: "Risk-off conditions tend to come with worries about growth and fuel demand."
+
+  - id: R10
+    label: Gold/silver ratio percentile
+    metric: gsr_pctile_5y
+    metric_phrase: "percentile of the gold/silver ratio over 5 years"
+    unit: ""
+    source: {provider: derived, status: to_verify, note: "Needs one verified common source for gold and silver prices."}
+    weight: 0.6
+    horizon: positional
+    stale_after_hours: 96
+    rules:
+      - op: ">"
+        threshold: 90
+        effects: {silver: 0.7}
+        why: {silver: "A very high gold/silver ratio means silver is cheap versus gold by recent history; the ratio has tended to mean-revert over longer horizons."}
+      - op: "<"
+        threshold: 10
+        effects: {silver: -0.7}
+        why: {silver: "A very low gold/silver ratio means silver is dear versus gold by recent history; the ratio has tended to mean-revert over longer horizons."}
+
+  - id: R11
+    label: US natural gas storage vs 5-year average
+    metric: eia_natgas_storage_vs_5y_pct
+    metric_phrase: "% deviation of US Lower-48 working gas in storage from the 5-year average"
+    unit: "%"
+    source: {provider: eia_ir, url: "https://ir.eia.gov/ngs/wngsr.json", status: verified,
+             note: "Collector cross-checks its own % against EIA's published % and fails if they disagree."}
+    weight: 1.0
+    horizon: swing
+    stale_after_hours: 336
+    rules:
+      - op: "<"
+        threshold: -3.0
+        effects: {natgas: 1}
+        why:
+          natgas: "US storage is the main weekly supply signal for the US benchmark that MCX natural gas follows. Storage below the 5-year average signals tighter supply, which tends to support prices."
+      - op: ">"
+        threshold: 3.0
+        effects: {natgas: -1}
+        why:
+          natgas: "Storage above the 5-year average signals ample supply, which tends to weigh on prices."
+
+  - id: R12
+    label: Natural gas weekly storage change vs 5-year average change
+    metric: eia_natgas_weekly_surprise_bcf
+    metric_phrase: "this week's storage change minus the 5-year average change"
+    unit: " bcf"
+    source: {provider: eia, status: to_verify, note: "EIA API v2 natural-gas weekly route schema not confirmed."}
+    weight: 0.7
+    horizon: intraday
+    stale_after_hours: 336
+    rules:
+      - op: "<"
+        threshold: -10
+        effects: {natgas: 1}
+        why: {natgas: "A smaller build (or bigger draw) than the seasonal norm means tighter supply."}
+      - op: ">"
+        threshold: 10
+        effects: {natgas: -1}
+        why: {natgas: "A bigger build (or smaller draw) than the seasonal norm means looser supply."}
+
+  - id: R13
+    label: US oil rig count, 4-week change
+    metric: rig_count_4w_chg
+    metric_phrase: "4-week change in the Baker Hughes US rig count"
+    unit: ""
+    source: {provider: to_decide, status: to_verify}
+    weight: 0.4
+    horizon: positional
+    stale_after_hours: 336
+    rules:
+      - op: ">"
+        threshold: 5
+        effects: {crude: -0.6, natgas: -0.4}
+        why:
+          crude: "More rigs point to more future US supply, which tends to weigh on prices."
+          natgas: "More rigs point to more future US gas supply, which tends to weigh on prices."
+      - op: "<"
+        threshold: -5
+        effects: {crude: 0.6, natgas: 0.4}
+        why:
+          crude: "Fewer rigs point to less future US supply, which tends to support prices."
+          natgas: "Fewer rigs point to less future US gas supply, which tends to support prices."
+
+  # ---- Positioning flags (CFTC managed money). They never move direction. ----
+  - id: R14g
+    label: Gold managed-money positioning (CFTC)
+    metric: cot_gold_pctile_3y
+    metric_phrase: "percentile of managed-money net position (% of open interest) over 3 years"
+    unit: ""
+    source: {provider: cftc, dataset: "72hh-3qpy", code: "088691", expect_name: "GOLD", status: verified}
+    weight: 0.0
+    flag_only: true
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - {op: ">", threshold: 90, effects: {gold: 0}, flag: "Managed money is unusually long gold versus its 3-year history: reversal risk is higher"}
+      - {op: "<", threshold: 10, effects: {gold: 0}, flag: "Managed money is unusually short gold versus its 3-year history: squeeze risk is higher"}
+
+  - id: R14s
+    label: Silver managed-money positioning (CFTC)
+    metric: cot_silver_pctile_3y
+    metric_phrase: "percentile of managed-money net position (% of open interest) over 3 years"
+    unit: ""
+    source: {provider: cftc, dataset: "72hh-3qpy", code: "084691", expect_name: "SILVER", status: verified}
+    weight: 0.0
+    flag_only: true
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - {op: ">", threshold: 90, effects: {silver: 0}, flag: "Managed money is unusually long silver versus its 3-year history: reversal risk is higher"}
+      - {op: "<", threshold: 10, effects: {silver: 0}, flag: "Managed money is unusually short silver versus its 3-year history: squeeze risk is higher"}
+
+  - id: R14c
+    label: WTI crude managed-money positioning (CFTC)
+    metric: cot_crude_pctile_3y
+    metric_phrase: "percentile of managed-money net position (% of open interest) over 3 years"
+    unit: ""
+    source: {provider: cftc, dataset: "72hh-3qpy", code: "067651", expect_name: "WTI", status: verified}
+    weight: 0.0
+    flag_only: true
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - {op: ">", threshold: 90, effects: {crude: 0}, flag: "Managed money is unusually long WTI versus its 3-year history: reversal risk is higher"}
+      - {op: "<", threshold: 10, effects: {crude: 0}, flag: "Managed money is unusually short WTI versus its 3-year history: squeeze risk is higher"}
+
+  - id: R14n
+    label: Natural gas managed-money positioning (CFTC)
+    metric: cot_natgas_pctile_3y
+    metric_phrase: "percentile of managed-money net position (% of open interest) over 3 years"
+    unit: ""
+    source: {provider: cftc, dataset: "72hh-3qpy", code: "023651", expect_name: "NAT GAS", status: verified}
+    weight: 0.0
+    flag_only: true
+    horizon: swing
+    stale_after_hours: 264
+    rules:
+      - {op: ">", threshold: 90, effects: {natgas: 0}, flag: "Managed money is unusually long natural gas versus its 3-year history: reversal risk is higher"}
+      - {op: "<", threshold: 10, effects: {natgas: 0}, flag: "Managed money is unusually short natural gas versus its 3-year history: squeeze risk is higher"}
+
+  - id: R15
+    label: India gold import duty change (manual input)
+    metric: india_gold_duty_chg_pp
+    metric_phrase: "change in India's gold import duty (percentage points), entered by you"
+    unit: " pp"
+    source: {provider: manual, status: verified, note: "Entered by you from a government notification in config/manual_inputs.yaml. Never scraped."}
+    weight: 1.0
+    horizon: positional
+    stale_after_hours: 720
+    rules:
+      - op: ">"
+        threshold: 0
+        effects: {gold: 1, silver: 0.5}
+        why:
+          gold: "Import duty is part of the domestic price; a higher duty raises the rupee price of gold."
+          silver: "Import duty is part of the domestic price; a higher duty raises the rupee price of silver."
+      - op: "<"
+        threshold: 0
+        effects: {gold: -1, silver: -0.5}
+        why:
+          gold: "Import duty is part of the domestic price; a duty cut lowers the rupee price of gold."
+          silver: "Import duty is part of the domestic price; a duty cut lowers the rupee price of silver."

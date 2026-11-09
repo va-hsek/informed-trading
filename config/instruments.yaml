@@ -1,0 +1,66 @@
+# Instruments the system analyses. See docs/source_verification.md for how each spec was checked.
+#
+# multiplier = rupees of P&L per 1.00 price-unit move, per 1 lot
+#            = (units in one lot) / (units the price is quoted per)
+#   Silver Micro: 1 kg lot, quoted per kg           -> 1
+#   Gold Ten:     10 g lot, quoted per 10 g         -> 1
+#   Crude Mini:   10 barrel lot, quoted per barrel  -> 10
+#
+# spec_status gates sizing. The report only sizes a position when spec_status is
+# 'confirmed' or 'cross_checked'. Anything else, or a null multiplier, makes sizing
+# refuse and the report says what to confirm.
+#   confirmed     = you checked it in your Alice Blue / MCX contract details (set this yourself)
+#   cross_checked = two independent sources agreed
+#   single_source / conflicting = NOT usable yet
+
+version: 1
+
+instruments:
+  silver_micro:
+    asset: silver
+    exchange: MCX
+    kind: futures
+    symbol_hint: "SILVERMIC"
+    multiplier: 1
+    tick_size: 1
+    quote_unit: "INR per kg"
+    lot_text: "1 kg"
+    spec_status: cross_checked
+  gold_ten:
+    asset: gold
+    exchange: MCX
+    kind: futures
+    symbol_hint: "GOLDTEN"
+    multiplier: 1
+    tick_size: 1
+    quote_unit: "INR per 10 g"
+    lot_text: "10 g"
+    spec_status: cross_checked
+  crude_mini:
+    asset: crude
+    exchange: MCX
+    kind: futures
+    symbol_hint: "CRUDEOILM"
+    multiplier: 10
+    tick_size: 1
+    quote_unit: "INR per barrel"
+    lot_text: "10 barrels"
+    spec_status: single_source      # confirm in your platform, then set to 'confirmed'
+  natgas_mini:
+    asset: natgas
+    exchange: MCX
+    kind: futures
+    symbol_hint: "NATGASMINI"
+    multiplier: null                # sources conflict: 250 vs 2,500 mmBtu per lot
+    tick_size: 0.1
+    quote_unit: "INR per mmBtu"
+    lot_text: "UNCONFIRMED (250 or 2,500 mmBtu)"
+    spec_status: conflicting
+
+# Equity names the hedge selector may consider. Chosen each run by MEASURED rolling
+# correlation to the commodity, never assumed. (Used by a later module.)
+hedge_watchlist:
+  crude:  [BPCL, HPCL, IOC, ONGC, OIL, INDIGO, ASIANPAINT]
+  gold:   [TCS, INFY, HCLTECH, WIPRO]
+  silver: [HINDZINC, VEDL, TCS, INFY]
+  natgas: [GAIL, PETRONET, IGL, GUJGASLTD]

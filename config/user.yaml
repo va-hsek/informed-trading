@@ -1,0 +1,42 @@
+# Runtime inputs YOU edit. Nothing here is a recommendation.
+
+capital_inr: 50000
+free_cash_inr: 50000          # cash not already used as margin
+
+# Broker access. Edit if your account access changes.
+broker:
+  name: aliceblue
+  segments: [NSE, NFO, MCX]   # segments active on your account
+  cds_enabled: false          # NSE currency derivatives (USDINR). Set true once activated
+
+# Fundamental layer
+# agreement = weight on the dominant side / weight of all firing drivers.
+# It is an AGREEMENT score, not a probability. It is called "calibrated" only if
+# the backtest supports that band (docs/backtest_preregistration.md).
+confidence_bar: 0.70
+# coverage = firing weight / weight of all drivers with fresh, verified data
+min_coverage: 0.35
+min_firing_drivers: 2
+
+# Margin
+margin_buffer: 0.25           # safety buffer on top of the margin you enter
+margin_max_age_days: 3        # margins older than this are refused
+
+# Scenario tables show BOTH readings of "10% loss"
+scenario_underlying_move_pct: 10
+scenario_capital_loss_pct: 10
+
+# Technical layer
+atr_period: 14
+stop_atr_multiple: 1.5
+caution_distance_atr: 0.5
+min_room_atr: 1.0             # room to the next level needed for "aligned"
+price_history_days: 400       # daily bars loaded per instrument
+max_price_age_days: 5         # if the newest price bar is older than this, technicals are withheld
+
+# Cost estimate for one lot round trip (INR). Leave null to show "costs not included".
+costs_roundtrip_per_lot: null
+
+# Folders
+data_dir: data
+backtest_cost_roundtrip_pct: 0.10   # ASSUMED round-trip cost as % of price for the backtest; not verified

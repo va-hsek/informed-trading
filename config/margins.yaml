@@ -1,0 +1,13 @@
+# Margin for ONE lot, in INR. Enter what your Alice Blue margin calculator / order window
+# shows today. The system refuses to size a position without a fresh figure
+# (older than user.yaml margin_max_age_days), because exchanges change margins and
+# raise them around volatile events.
+#
+# as_of: the date you read these figures, YYYY-MM-DD.
+
+as_of: null
+margins_per_lot_inr:
+  silver_micro: null
+  gold_ten: null
+  crude_mini: null
+  natgas_mini: null

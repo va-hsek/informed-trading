@@ -1,0 +1,9 @@
+pyyaml
+pandas
+numpy
+markdown
+beautifulsoup4
+lxml
+defusedxml
+pya3
+pytest

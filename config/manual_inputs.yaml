@@ -1,0 +1,12 @@
+# Values only you can supply (policy events). Leave value null when there is nothing new.
+# Never scraped. Enter from the official notification and note where it came from.
+
+india_gold_duty_chg_pp:
+  value: null          # change in India's gold import duty, percentage points (e.g. 1.0 or -2.0)
+  as_of: null          # ISO date of the notification, e.g. 2026-10-15
+  note: ""             # e.g. "CBIC notification no. ..."
+
+# Dashboard values with no free verified feed. Newest value first is not required; list oldest to newest.
+# Example:  india_10y: [{date: "2026-11-06", value: 6.55}, {date: "2026-11-07", value: 6.57}]
+dashboard_manual:
+  india_10y: []

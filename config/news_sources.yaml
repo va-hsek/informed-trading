@@ -1,0 +1,154 @@
+# News sources and topic keywords. Edit freely.
+#
+# mode: rss    = direct feed; the article page is fetched (robots.txt respected) and, if it is paywalled,
+#                the Wayback Machine is tried. archive.today has no API and blocks bots, so for paywalled
+#                items the report only prints a manual archive link for you to tap.
+# mode: gnews  = Google News RSS search. Gives headline + link only (the article text is not readable
+#                this way), so those items are listed as "headline only, not read".
+# status: verified = checked valid on 2026-11-07. to_verify = URL believed correct, not checked from
+#                here. `python3 -m news.verify_feeds` tests all of them on your machine.
+# A feed that fails on a given run is listed in the report's coverage section. It never stops the run.
+
+feeds:
+  # ---- official / primary ----
+  - {name: "RBI press releases",      category: official, mode: rss, url: "https://www.rbi.org.in/pressreleases_rss.xml", status: verified, assume_tz: "+05:30"}
+  - {name: "Federal Reserve press",   category: official, mode: rss, url: "https://www.federalreserve.gov/feeds/press_all.xml", status: to_verify}
+  - {name: "EIA Today in Energy",     category: official, mode: rss, url: "https://www.eia.gov/rss/todayinenergy.xml", status: to_verify}
+  - {name: "PIB (Govt of India)",     category: official, mode: rss, url: "https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3", status: to_verify}
+  # ---- world markets and macro (direct) ----
+  - {name: "BBC Business",            category: world, mode: rss, url: "https://feeds.bbci.co.uk/news/business/rss.xml", status: to_verify}
+  - {name: "CNBC Top News",           category: world, mode: rss, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", status: to_verify}
+  - {name: "WSJ Markets",             category: world, mode: rss, url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", status: to_verify, paywalled: true}
+  - {name: "Bloomberg Markets",       category: world, mode: rss, url: "https://feeds.bloomberg.com/markets/news.rss", status: to_verify, paywalled: true}
+  - {name: "Financial Times",         category: world, mode: rss, url: "https://www.ft.com/rss/home", status: to_verify, paywalled: true}
+  # ---- India (direct) ----
+  - {name: "Economic Times Markets",  category: india, mode: rss, url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Mint Markets",            category: india, mode: rss, url: "https://www.livemint.com/rss/markets", status: to_verify, assume_tz: "+05:30"}
+  - {name: "BusinessLine Markets",    category: india, mode: rss, url: "https://www.thehindubusinessline.com/markets/feeder/default.rss", status: to_verify, assume_tz: "+05:30"}
+  # ---- regional coverage (all to_verify: run `python3 -m news.verify_feeds`; failures are listed, never hidden) ----
+  - {name: "Business Standard Markets", category: india, region: india, mode: rss, url: "https://www.business-standard.com/rss/markets-106.rss", status: to_verify, assume_tz: "+05:30"}
+  - {name: "The Hindu Business",      category: india, region: india, mode: rss, url: "https://www.thehindu.com/business/feeder/default.rss", status: to_verify, assume_tz: "+05:30"}
+  - {name: "SCMP Business",           category: world, region: apac, mode: rss, url: "https://www.scmp.com/rss/92/feed", status: to_verify}
+  - {name: "Straits Times Business",  category: world, region: apac, mode: rss, url: "https://www.straitstimes.com/news/business/rss.xml", status: to_verify}
+  - {name: "ABC Australia Business",  category: world, region: apac, mode: rss, url: "https://www.abc.net.au/news/feed/2942460/rss.xml", status: to_verify}
+  - {name: "Guardian Business",       category: world, region: europe, mode: rss, url: "https://www.theguardian.com/uk/business/rss", status: to_verify}
+  - {name: "DW Business",             category: world, region: europe, mode: rss, url: "https://rss.dw.com/rdf/rss-en-bus", status: to_verify}
+  - {name: "ECB press",               category: official, region: europe, mode: rss, url: "https://www.ecb.europa.eu/rss/press.html", status: to_verify}
+  - {name: "NPR Economy",             category: world, region: americas, mode: rss, url: "https://feeds.npr.org/1017/rss.xml", status: to_verify}
+  - {name: "Al Jazeera",              category: world, region: middleeast, mode: rss, url: "https://www.aljazeera.com/xml/rss/all.xml", status: to_verify}
+  - {name: "Nikkei Asia (via Google News)", category: world, region: apac, mode: gnews, query: "site:asia.nikkei.com when:2d", paywalled: true}
+  - {name: "Asia markets news",       category: world, region: apac, mode: gnews, query: "(Nikkei OR Kospi OR Hang Seng OR RBA OR PBOC) when:2d"}
+  - {name: "Europe markets news",     category: world, region: europe, mode: gnews, query: "(ECB OR Bank of England OR DAX OR Eurozone inflation) when:2d"}
+  - {name: "Americas markets news",   category: world, region: americas, mode: gnews, query: "(Wall Street OR Bank of Canada OR Brazil central bank OR Banxico) when:2d"}
+  - {name: "Middle East energy news", category: world, region: middleeast, mode: gnews, query: "(Iran OR Hormuz OR Gulf oil) when:2d"}
+  - {name: "Deals news",              category: world, mode: gnews, query: "(acquire OR takeover OR buyout OR merger) billion when:2d"}
+  # ---- wider coverage: India, USA, Europe (all to_verify; failures are listed in the coverage table, never hidden) ----
+  - {name: "Moneycontrol Top News",    category: india, region: india, mode: rss, url: "https://www.moneycontrol.com/rss/MCtopnews.xml", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Moneycontrol Business",    category: india, region: india, mode: rss, url: "https://www.moneycontrol.com/rss/business.xml", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Indian Express Business",  category: india, region: india, mode: rss, url: "https://indianexpress.com/section/business/feed/", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Hindustan Times Business", category: india, region: india, mode: rss, url: "https://www.hindustantimes.com/feeds/rss/business/rssfeed.xml", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Times of India Business",  category: india, region: india, mode: rss, url: "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Financial Express Markets", category: india, region: india, mode: rss, url: "https://www.financialexpress.com/market/feed/", status: to_verify, assume_tz: "+05:30"}
+  - {name: "ET Economy",               category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/news/economy/rssfeeds/1373380680.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "ET Industry",              category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/industry/rssfeeds/13352306.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "India top stories (via Google News)", category: india, region: india, mode: gnews, query: "(India economy OR Sensex OR Nifty OR RBI OR Indian companies results) when:1d"}
+  - {name: "NYT Business",             category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml", status: to_verify, paywalled: true}
+  - {name: "NYT Economy",              category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml", status: to_verify, paywalled: true}
+  - {name: "Washington Post Business", category: world, region: americas, mode: rss, url: "https://feeds.washingtonpost.com/rss/business", status: to_verify, paywalled: true}
+  - {name: "MarketWatch Top Stories",  category: world, region: americas, mode: rss, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", status: to_verify}
+  - {name: "WSJ US Business",          category: world, region: americas, mode: rss, url: "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml", status: to_verify, paywalled: true}
+  - {name: "WSJ World News",           category: world, mode: rss, url: "https://feeds.a.dj.com/rss/RSSWorldNews.xml", status: to_verify, paywalled: true}
+  - {name: "WSJ Technology",           category: tech, mode: rss, url: "https://feeds.a.dj.com/rss/RSSWSJD.xml", status: to_verify, paywalled: true}
+  - {name: "Bloomberg Economics",      category: world, mode: rss, url: "https://feeds.bloomberg.com/economics/news.rss", status: to_verify, paywalled: true}
+  - {name: "Bloomberg Technology",     category: tech, mode: rss, url: "https://feeds.bloomberg.com/technology/news.rss", status: to_verify, paywalled: true}
+  - {name: "Bloomberg Politics",       category: world, region: americas, mode: rss, url: "https://feeds.bloomberg.com/politics/news.rss", status: to_verify, paywalled: true}
+  - {name: "FT Markets",               category: world, mode: rss, url: "https://www.ft.com/markets?format=rss", status: to_verify, paywalled: true}
+  - {name: "FT World",                 category: world, mode: rss, url: "https://www.ft.com/world?format=rss", status: to_verify, paywalled: true}
+  - {name: "FT Companies",             category: world, mode: rss, url: "https://www.ft.com/companies?format=rss", status: to_verify, paywalled: true}
+  - {name: "CNBC Economy",             category: world, region: americas, mode: rss, url: "https://www.cnbc.com/id/20910258/device/rss/rss.html", status: to_verify}
+  - {name: "CNBC Finance",             category: world, region: americas, mode: rss, url: "https://www.cnbc.com/id/10000664/device/rss/rss.html", status: to_verify}
+  - {name: "CNBC Energy",              category: world, mode: rss, url: "https://www.cnbc.com/id/19836768/device/rss/rss.html", status: to_verify}
+  - {name: "CNBC Technology",          category: tech, mode: rss, url: "https://www.cnbc.com/id/19854910/device/rss/rss.html", status: to_verify}
+  - {name: "Yahoo Finance",            category: world, region: americas, mode: rss, url: "https://finance.yahoo.com/news/rssindex", status: to_verify}
+  - {name: "Fox Business",             category: world, region: americas, mode: rss, url: "https://moxie.foxbusiness.com/google-publisher/latest.xml", status: to_verify}
+  - {name: "US corporate news (via Google News)", category: world, region: americas, mode: gnews, query: "(earnings OR layoffs OR antitrust OR SEC OR Fed) Wall Street when:1d"}
+  - {name: "Euronews Business",        category: world, region: europe, mode: rss, url: "https://www.euronews.com/rss?level=theme&name=business", status: to_verify}
+  - {name: "France 24 Business",       category: world, region: europe, mode: rss, url: "https://www.france24.com/en/business/rss", status: to_verify}
+  - {name: "Politico Europe",          category: world, region: europe, mode: rss, url: "https://www.politico.eu/feed/", status: to_verify}
+  - {name: "BBC World",                category: world, mode: rss, url: "https://feeds.bbci.co.uk/news/world/rss.xml", status: to_verify}
+  - {name: "BBC Europe",               category: world, region: europe, mode: rss, url: "https://feeds.bbci.co.uk/news/world/europe/rss.xml", status: to_verify}
+  - {name: "Guardian Europe",          category: world, region: europe, mode: rss, url: "https://www.theguardian.com/world/europe-news/rss", status: to_verify}
+  - {name: "Guardian Economics",       category: world, region: europe, mode: rss, url: "https://www.theguardian.com/business/economics/rss", status: to_verify}
+  - {name: "Eurozone and UK companies (via Google News)", category: world, region: europe, mode: gnews, query: "(Europe OR UK OR Germany OR France) (shares OR earnings OR energy OR sanctions) when:1d"}
+  # ---- tech ----
+  - {name: "TechCrunch",              category: tech, mode: rss, url: "https://techcrunch.com/feed/", status: verified}
+  # ---- headline-only via Google News search (covers outlets without usable feeds) ----
+  - {name: "Reuters (via Google News)",    category: world, mode: gnews, query: "site:reuters.com (markets OR commodities OR oil OR gold OR economy) when:2d"}
+  - {name: "FT (via Google News)",         category: world, mode: gnews, query: "site:ft.com (markets OR oil OR gold OR economy) when:2d", paywalled: true}
+  - {name: "Bloomberg (via Google News)",  category: world, mode: gnews, query: "site:bloomberg.com (markets OR oil OR gold OR commodities) when:2d", paywalled: true}
+  - {name: "WSJ (via Google News)",        category: world, mode: gnews, query: "site:wsj.com (markets OR oil OR gold OR economy) when:2d", paywalled: true}
+  - {name: "Axios (via Google News)",      category: tech,  mode: gnews, query: "site:axios.com (economy OR markets OR energy OR tech) when:2d"}
+  - {name: "Crude oil news",               category: asset, mode: gnews, query: "(crude oil OR Brent OR OPEC) when:2d"}
+  - {name: "Natural gas news",             category: asset, mode: gnews, query: "(natural gas storage OR LNG OR Henry Hub) when:2d"}
+  - {name: "Gold news",                    category: asset, mode: gnews, query: "(gold price OR bullion) when:2d"}
+  - {name: "Silver news",                  category: asset, mode: gnews, query: "(silver price) when:2d"}
+  - {name: "Fed and yields news",          category: world, mode: gnews, query: "(Federal Reserve OR FOMC OR Treasury yields) when:2d"}
+  - {name: "India markets news",           category: india, mode: gnews, query: "(RBI OR rupee OR Sensex OR Nifty OR India inflation) when:2d"}
+
+limits:
+  max_items_per_feed: 30
+  max_age_hours: 60               # items older than this are ignored
+  max_articles_read: 260          # hard cap on LLM-read articles per run (controls cost)
+  max_article_chars: 12000        # text sent to the model per article
+  min_article_chars: 600          # shorter text counts as paywalled / truncated
+  max_claims_per_article: 8        # enough to tell most of a story; each claim is still verified against the article
+  max_paragraph_claims: 3         # claims per printed paragraph
+  front_page_stories: 10
+  max_stories_per_section: 14        # default cap; see section_caps for the regions you care most about
+  calendar_horizon_days: 21
+  calendar_review_max_age_days: 7
+  in_brief_max: 150                # headlines listed without a summary
+  # Per-section printed-story caps: India, USA and Europe get most room; the rest show only the most important/trending.
+  section_caps: {"India": 40, "USA and Americas": 40, "Europe": 40, "Markets and macro": 25, "Energy and metals": 20, "Tech and AI": 16,
+                 "Deals and corporate": 16, "Asia-Pacific": 10, "Middle East": 10, "Official releases": 12}
+  # Per-region cap on articles READ by the model (rest are listed in brief). Keeps cost bounded and balanced.
+  read_caps: {"india": 90, "americas": 90, "europe": 70, "apac": 20, "middleeast": 20, "other": 40}
+  trending_bonus_per_extra_source: 1.5
+
+llm:
+  extract_model: claude-haiku-5-5      # model strings from Anthropic's published list
+  # Estimated list prices in USD per million tokens, used ONLY for the cost log. Sources disagree;
+  # these are deliberately the higher figures. Check Anthropic's pricing page and edit.
+  price_input_per_mtok: 1.0
+  price_output_per_mtok: 5.0
+
+# Topic keywords (case-insensitive, whole-word). The first matching topic group decides the section.
+topics:
+  crude:      ["crude", "oil price", "brent", "wti", "opec", "barrel", "refinery", "petroleum", "oil output", "oil demand"]
+  natgas:     ["natural gas", "lng", "henry hub", "gas storage", "natgas"]
+  gold:       ["gold", "bullion", "safe haven", "safe-haven"]
+  silver:     ["silver"]
+  rates_fed:  ["fed", "fomc", "federal reserve", "treasury yield", "interest rate", "rate cut", "rate hike", "powell", "inflation", "cpi", "payrolls"]
+  usd_inr:    ["dollar", "rupee", "inr", "forex", "currency"]
+  india:      ["rbi", "repo rate", "sensex", "nifty", "sebi", "gst", "fii", "fpi", "india"]
+  geopolitics: ["sanction", "tariff", "war", "ceasefire", "middle east", "russia", "ukraine", "iran", "china", "trade deal"]
+  tech:       ["ai", "chip", "semiconductor", "startup", "data center", "data centre", "nvidia"]
+  deals:      ["acquire", "acquires", "acquisition", "takeover", "buyout", "merger", "stake", "ipo", "deal valued"]
+  defence:    ["defence", "defense", "missile", "navy", "military", "weapons"]
+
+# Region keywords. A feed's own `region` wins; otherwise the first matching region below is used.
+regions:
+  india:      ["india", "indian", "rbi", "sensex", "nifty", "rupee", "mumbai", "new delhi", "sebi", "bse", "nse", "adani", "reliance", "infosys", "tata"]
+  apac:       ["japan", "nikkei", "tokyo", "china", "chinese", "beijing", "shanghai", "hong kong", "hang seng", "korea", "kospi", "seoul", "taiwan", "tsmc", "australia", "rba", "asx", "singapore", "indonesia", "asia"]
+  europe:     ["europe", "european", "ecb", "eurozone", "euro zone", "germany", "german", "dax", "france", "britain", "u.k.", "uk", "bank of england", "london", "ftse", "brussels", "eu", "ukraine"]
+  middleeast: ["iran", "iranian", "israel", "gaza", "hormuz", "saudi", "gulf", "qatar", "opec", "middle east", "tehran"]
+  americas:   ["wall street", "u.s.", "s&p 500", "nasdaq", "dow jones", "federal reserve", "washington", "canada", "canadian", "brazil", "mexico", "treasury", "congress", "white house"]
+
+# Weekly calendar refresh (news/calendar_refresh.py). The news report also triggers it when the calendar is older than
+# calendar_review_max_age_days. search_tool_type is Anthropic's server-side web search tool version: check
+# https://docs.claude.com for the current string if the call is rejected. Prices are estimates for the cost log only.
+calendar_refresh:
+  model: claude-sonnet-5-5
+  search_tool_type: web_search_20250305
+  price_input_per_mtok: 3.0
+  price_output_per_mtok: 15.0

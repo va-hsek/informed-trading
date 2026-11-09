@@ -1,0 +1,156 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>SYNTHETIC DEMO. NOT REAL MARKET DATA. DO NOT TRADE ON THIS.</title><style>
+:root{color-scheme:light dark}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;margin:0 auto;max-width:46rem;padding:1rem 16px 3rem;
+background:#fff;color:#1a1a1a}
+h1{font-size:1.5rem}h2{font-size:1.25rem;margin-top:2rem;border-bottom:1px solid #8884;padding-bottom:.3rem}
+h3{font-size:1.05rem;margin-top:1.4rem}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;font-size:.9rem}
+th,td{border:1px solid #8886;padding:.35rem .55rem;text-align:left;vertical-align:top}
+blockquote{margin:1rem 0;padding:.5rem 1rem;border-left:4px solid #888;background:#8881}
+code{background:#8882;padding:0 .25rem;border-radius:3px}
+a{word-break:break-word}
+@media (prefers-color-scheme:dark){body{background:#121212;color:#e8e8e8}a{color:#8ab4f8}}
+</style></head><body><h1>SYNTHETIC DEMO. NOT REAL MARKET DATA. DO NOT TRADE ON THIS.</h1>
+<p>Numbers, multiplier and margin below are invented to show the report layout only.</p>
+<h1>Action report</h1>
+<p>Generated: 2026-11-07T08:00+05:30</p>
+<blockquote>
+<p>This report states facts and rule outputs. It is decision support, not a recommendation. Any call to trade is yours. Figures are estimates where marked; exchanges and brokers can change margins without notice.</p>
+</blockquote>
+<h2>Data quality</h2>
+<ul>
+<li>R13 (stale): stale: 400.0h old, limit 96h</li>
+</ul>
+<h2>Upcoming events</h2>
+<ul>
+<li>(demo) no events loaded</li>
+</ul>
+<h2>SILVER (SYNTHETIC instrument, SYNTHETIC prices)</h2>
+<p><strong>Agreement panel: CONFLICTING</strong></p>
+<h3>Fundamental</h3>
+<p><strong>Fundamental state: UP</strong>. Agreement 100% (bar 70%), coverage 75%, 3 drivers firing.
+Shortest horizon among supporting drivers: <strong>swing</strong>.</p>
+<p>Driver by driver (data point, then rule, then today's reading, then why it matters):</p>
+<p><strong>R01 · Broad USD 5d change</strong> (weight 1, horizon swing)
+- <strong>Data point:</strong> Broad USD 5d change: -0.9. Data is 2 hours old [SYNTHETIC-DEMO].
+- <strong>Rule:</strong> IF usd &gt; 0.5 THEN silver bearish (x1)
+- <strong>Rule:</strong> IF usd &lt; -0.5 THEN silver bullish (x1)  &lt;- today
+- <strong>Today:</strong> usd = -0.90 -&gt; TRIGGERED (contribution +1.00)</p>
+<p><strong>R02 · US 10Y real yield 5d change</strong> (weight 1.2, horizon swing)
+- <strong>Data point:</strong> US 10Y real yield 5d change: -0.18. Data is 2 hours old [SYNTHETIC-DEMO].
+- <strong>Rule:</strong> IF real &gt; 0.1 THEN silver bearish (x0.8)
+- <strong>Rule:</strong> IF real &lt; -0.1 THEN silver bullish (x0.8)  &lt;- today
+- <strong>Today:</strong> real = -0.18 -&gt; TRIGGERED (contribution +0.96)</p>
+<p><strong>R04 · USDINR 5d change</strong> (weight 0.8, horizon swing)
+- <strong>Data point:</strong> USDINR 5d change: 0.35. Data is 2 hours old [SYNTHETIC-DEMO].
+- <strong>Rule:</strong> IF inr &gt; 0.3 THEN silver bullish (x1)  &lt;- today
+- <strong>Rule:</strong> IF inr &lt; -0.3 THEN silver bearish (x1)
+- <strong>Today:</strong> inr = 0.35 -&gt; TRIGGERED (contribution +0.80)</p>
+<p><strong>R08 · Copper 20d change</strong> (weight 0.7, horizon positional)
+- <strong>Data point:</strong> Copper 20d change: 1.2. Data is 2 hours old [SYNTHETIC-DEMO].
+- <strong>Rule:</strong> IF cu &gt; 3 THEN silver bullish (x1)
+- <strong>Rule:</strong> IF cu &lt; -3 THEN silver bearish (x1)
+- <strong>Today:</strong> cu = 1.20 -&gt; not triggered</p>
+<p>Excluded from scoring (never guessed):
+- R13 (stale): stale: 400.0h old, limit 96h</p>
+<h3>Technical</h3>
+<p>Last close <strong>151,177.07</strong>, ATR(14) <strong>1,492.89</strong>. Location: <strong>FLOOR</strong> (11% of the way from support to resistance).
+- Nearest support: 151,101.90 (pivot P); 75.17 away = 0.05 ATR.
+- Nearest resistance: 151,801.90 (pivot R1); 624.83 away = 0.42 ATR.
+- Volume profile: POC 150,103.17, value area 147,861.87 to 158,864.62.
+- Moving averages: MA20 155,306.28, MA50 156,478.42, MA200 154,293.41.
+- Volume: last 5 bars volume = 1.01x prior 20-bar average; 5-bar move is down. Volume is near average.
+- Stop zones (information, not an instruction): ATR-based long 148,937.74 / short 153,416.40; structure-based long 150,728.68 / short 152,175.12.
+- CAUTION: Within 0.05 ATR of support 151101.90 (pivot P)
+- CAUTION: Within 0.42 ATR of resistance 151801.90 (pivot R1)</p>
+<h3>Where they agree and disagree</h3>
+<ul>
+<li>DISAGREES: Fundamentals point up but resistance 151801.90 is only 0.42 ATR away (room needed: 1 ATR).</li>
+<li>DISAGREES: Fundamentals point up but price is below both the 50-bar (156478.42) and 200-bar (154293.41) averages.</li>
+<li>Would help resolve it: A close above 151801.90.</li>
+<li>Would help resolve it: Price moving back above the 50-bar average (156478.42).</li>
+</ul>
+<h3>Size and margin scenario</h3>
+<p>Scenario for a <strong>long</strong> of 1 lot(s) at 151,177.07 with stop 150,728.68 (448.39 points, 0.30% of entry). This is a scenario, not an instruction.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Margin per lot (broker figure)</td>
+<td>Rs 30,000</td>
+</tr>
+<tr>
+<td>Margin required</td>
+<td>Rs 30,000</td>
+</tr>
+<tr>
+<td>Margin with safety buffer</td>
+<td>Rs 37,500</td>
+</tr>
+<tr>
+<td>Free cash</td>
+<td>Rs 60,000</td>
+</tr>
+<tr>
+<td>Cash check</td>
+<td>Enough for buffered margin plus the stop-out loss</td>
+</tr>
+<tr>
+<td>Loss if stop hits</td>
+<td>-Rs 448</td>
+</tr>
+<tr>
+<td>EOD cash if stop hits</td>
+<td>Rs 59,552</td>
+</tr>
+<tr>
+<td>Gain if price reaches 151,801.90 (next level, a scenario not a target)</td>
+<td>Rs 625</td>
+</tr>
+<tr>
+<td>EOD cash in that case</td>
+<td>Rs 60,625</td>
+</tr>
+<tr>
+<td>Margin-call price (broker margin)</td>
+<td>121,177.07</td>
+</tr>
+<tr>
+<td>Margin-call price (with buffer)</td>
+<td>128,677.07</td>
+</tr>
+<tr>
+<td>Stop vs margin call</td>
+<td>Stop triggers before the buffered margin-call level</td>
+</tr>
+<tr>
+<td>10% move in underlying against you (to 136,059.36)</td>
+<td>P&amp;L -Rs 15,118; EOD cash Rs 44,882</td>
+</tr>
+<tr>
+<td>10% of capital lost (Rs 6,000)</td>
+<td>needs a 6,000.00-point move (3.97% of entry), which is after stop</td>
+</tr>
+</tbody>
+</table>
+<p>Note: Brokerage/exchange costs are NOT included in these figures.</p>
+<p>Margin and costs are estimates; exchanges can raise margins around volatile events.</p>
+<h3>What could go wrong</h3>
+<ul>
+<li>Conflict: Fundamentals point up but resistance 151801.90 is only 0.42 ATR away (room needed: 1 ATR).</li>
+<li>Conflict: Fundamentals point up but price is below both the 50-bar (156478.42) and 200-bar (154293.41) averages.</li>
+<li>1 driver(s) were excluded for stale/missing/unverified data, so the view rests on fewer inputs.</li>
+<li>The scenario stop is only 0.30 ATR from entry (448.39 points vs ATR 1,492.89): ordinary daily volatility could reach it.</li>
+</ul>
+<h3>What to watch</h3>
+<ul>
+<li>Volume: last 5 bars volume = 1.01x prior 20-bar average; 5-bar move is down. Volume is near average.</li>
+<li>Within 0.05 ATR of support 151101.90 (pivot P)</li>
+<li>Within 0.42 ATR of resistance 151801.90 (pivot R1)</li>
+<li>Horizon of the view: swing. Re-run when any supporting driver refreshes or goes stale.</li>
+</ul></body></html>
