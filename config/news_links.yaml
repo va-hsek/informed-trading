@@ -1,61 +1,374 @@
 # Which tradable instruments a news topic touches. This is a RELATION table, not advice:
 # `relation` states a factual link (what the company/contract is exposed to) and never a direction.
-# Tickers are written from general knowledge; confirm every symbol and lot in Alice Blue before using it.
+# Tickers are written from general knowledge, BUT every `symbols` entry is checked against Alice Blue's contract master each run (exact match).
+# A symbol that does not resolve is shown as 'not found in Alice Blue' instead of being trusted. Nothing for you to check by hand.
 # `row` names a dashboard row (config/dashboard.yaml label) whose latest price/change is shown beside the news.
 max_headlines_per_instrument: 2
 topics:
   crude:
-    - {name: "MCX Crude Oil Mini", venue: MCX, row: "MCX crude mini (INR/bbl)", relation: "Futures priced off crude; moves with Brent/WTI and the rupee"}
-    - {name: "ONGC", venue: NSE, relation: "Upstream producer: realisations follow crude prices"}
-    - {name: "Oil India", venue: NSE, relation: "Upstream producer: realisations follow crude prices"}
-    - {name: "BPCL / HPCL / IOC", venue: NSE, relation: "Refiner-marketers: crude is their main input cost; retail fuel pricing is policy-influenced"}
-    - {name: "InterGlobe Aviation (IndiGo)", venue: NSE, relation: "Jet fuel is a major airline cost"}
-    - {name: "Asian Paints", venue: NSE, relation: "Crude derivatives are inputs to paint raw materials"}
+  - name: MCX Crude Oil Mini
+    venue: MCX
+    row: MCX crude mini (INR/bbl)
+    relation: Futures priced off crude; moves with Brent/WTI and the rupee
+  - name: ONGC
+    venue: NSE
+    relation: 'Upstream producer: realisations follow crude prices'
+    symbols:
+    - ONGC
+    exchange: NSE
+  - name: Oil India
+    venue: NSE
+    relation: 'Upstream producer: realisations follow crude prices'
+    symbols:
+    - OIL
+    exchange: NSE
+  - name: BPCL / HPCL / IOC
+    venue: NSE
+    relation: 'Refiner-marketers: crude is their main input cost; retail fuel pricing is policy-influenced'
+    symbols:
+    - BPCL
+    - HINDPETRO
+    - IOC
+    exchange: NSE
+  - name: InterGlobe Aviation (IndiGo)
+    venue: NSE
+    relation: Jet fuel is a major airline cost
+    symbols:
+    - INDIGO
+    exchange: NSE
+  - name: Asian Paints
+    venue: NSE
+    relation: Crude derivatives are inputs to paint raw materials
+    symbols:
+    - ASIANPAINT
+    exchange: NSE
   natgas:
-    - {name: "MCX Natural Gas Mini", venue: MCX, row: "MCX natural gas mini (INR/mmBtu)", relation: "Futures priced off Henry Hub-linked gas and the rupee; lot size still unconfirmed in this system"}
-    - {name: "GAIL", venue: NSE, relation: "Gas transmission and marketing; LNG and gas prices affect margins"}
-    - {name: "Petronet LNG", venue: NSE, relation: "LNG import terminals; volumes and LNG prices matter"}
-    - {name: "IGL / Gujarat Gas", venue: NSE, relation: "City gas distributors: gas input costs and pricing"}
+  - name: MCX Natural Gas Mini
+    venue: MCX
+    row: MCX natural gas mini (INR/mmBtu)
+    relation: Futures priced off Henry Hub-linked gas and the rupee; lot size still unconfirmed in this system
+  - name: GAIL
+    venue: NSE
+    relation: Gas transmission and marketing; LNG and gas prices affect margins
+    symbols:
+    - GAIL
+    exchange: NSE
+  - name: Petronet LNG
+    venue: NSE
+    relation: LNG import terminals; volumes and LNG prices matter
+    symbols:
+    - PETRONET
+    exchange: NSE
+  - name: IGL / Gujarat Gas
+    venue: NSE
+    relation: 'City gas distributors: gas input costs and pricing'
+    symbols:
+    - IGL
+    - GUJGASLTD
+    exchange: NSE
   gold:
-    - {name: "MCX Gold Ten", venue: MCX, row: "MCX gold ten (INR/10 g)", relation: "Futures priced off international gold and the rupee"}
-    - {name: "Gold ETFs (e.g. GOLDBEES)", venue: NSE, relation: "Exchange-traded funds that track domestic gold prices; check the fund's tracking error"}
-    - {name: "Muthoot Finance / Manappuram", venue: NSE, relation: "Gold-loan lenders: loan value and collateral track gold prices"}
-    - {name: "Titan", venue: NSE, relation: "Jewellery retailer: gold prices affect demand and margins"}
+  - name: MCX Gold Ten
+    venue: MCX
+    row: MCX gold ten (INR/10 g)
+    relation: Futures priced off international gold and the rupee
+  - name: Gold ETFs (e.g. GOLDBEES)
+    venue: NSE
+    relation: Exchange-traded funds that track domestic gold prices; check the fund's tracking error
+    symbols:
+    - GOLDBEES
+    exchange: NSE
+  - name: Muthoot Finance / Manappuram
+    venue: NSE
+    relation: 'Gold-loan lenders: loan value and collateral track gold prices'
+    symbols:
+    - MUTHOOTFIN
+    - MANAPPURAM
+    exchange: NSE
+  - name: Titan
+    venue: NSE
+    relation: 'Jewellery retailer: gold prices affect demand and margins'
+    symbols:
+    - TITAN
+    exchange: NSE
   silver:
-    - {name: "MCX Silver Micro", venue: MCX, row: "MCX silver micro (INR/kg)", relation: "Futures priced off international silver and the rupee"}
-    - {name: "Silver ETFs (e.g. SILVERBEES)", venue: NSE, relation: "Exchange-traded funds that track domestic silver prices; check the fund's tracking error"}
-    - {name: "Hindustan Zinc / Vedanta", venue: NSE, relation: "Silver is a by-product of zinc-lead mining"}
+  - name: MCX Silver Micro
+    venue: MCX
+    row: MCX silver micro (INR/kg)
+    relation: Futures priced off international silver and the rupee
+  - name: Silver ETFs (e.g. SILVERBEES)
+    venue: NSE
+    relation: Exchange-traded funds that track domestic silver prices; check the fund's tracking error
+    symbols:
+    - SILVERBEES
+    exchange: NSE
+  - name: Hindustan Zinc / Vedanta
+    venue: NSE
+    relation: Silver is a by-product of zinc-lead mining
+    symbols:
+    - HINDZINC
+    - VEDL
+    exchange: NSE
   rates_fed:
-    - {name: "MCX Gold Ten / Silver Micro", venue: MCX, row: "US 10-year real yield (%)", relation: "Precious metals are priced against US real yields and the dollar"}
-    - {name: "Liquid funds / LIQUIDBEES", venue: NSE, kind: debt, relation: "Overnight and short-term rates feed straight into liquid-fund returns"}
-    - {name: "Government-securities funds and gilt ETFs", venue: NSE, kind: debt, relation: "Bond prices fall when yields rise; longer maturities move more"}
-    - {name: "Nifty IT (TCS, Infosys, HCL Tech, Wipro)", venue: NSE, relation: "Earn in dollars; sensitive to US growth, rates and the rupee"}
+  - name: MCX Gold Ten / Silver Micro
+    venue: MCX
+    row: US 10-year real yield (%)
+    relation: Precious metals are priced against US real yields and the dollar
+  - name: Liquid funds / LIQUIDBEES
+    venue: NSE
+    kind: debt
+    relation: Overnight and short-term rates feed straight into liquid-fund returns
+    symbols:
+    - LIQUIDBEES
+    exchange: NSE
+  - name: Government-securities funds and gilt ETFs
+    venue: NSE
+    kind: debt
+    relation: Bond prices fall when yields rise; longer maturities move more
+  - name: Nifty IT (TCS, Infosys, HCL Tech, Wipro)
+    venue: NSE
+    relation: Earn in dollars; sensitive to US growth, rates and the rupee
+    symbols: &id001
+    - TCS
+    - INFY
+    - HCLTECH
+    - WIPRO
+    exchange: NSE
   usd_inr:
-    - {name: "USDINR", venue: "NSE currency (CDS)", row: "USDINR (INR per USD)", relation: "Not enabled on your account (cds_enabled: false)"}
-    - {name: "Nifty IT (TCS, Infosys, HCL Tech, Wipro)", venue: NSE, relation: "Dollar earners: a weaker rupee lifts rupee revenue"}
-    - {name: "MCX crude, gold, silver", venue: MCX, relation: "All priced in rupees off dollar benchmarks, so USDINR enters the price"}
+  - name: USDINR
+    venue: NSE currency (CDS)
+    row: USDINR (INR per USD)
+    relation: 'Not enabled on your account (cds_enabled: false)'
+  - name: Nifty IT (TCS, Infosys, HCL Tech, Wipro)
+    venue: NSE
+    relation: 'Dollar earners: a weaker rupee lifts rupee revenue'
+    symbols: *id001
+    exchange: NSE
+  - name: MCX crude, gold, silver
+    venue: MCX
+    relation: All priced in rupees off dollar benchmarks, so USDINR enters the price
   india:
-    - {name: "Nifty 50 / Sensex", venue: NSE, row: "Nifty 50", relation: "Broad Indian equity benchmarks"}
-    - {name: "Bank Nifty constituents", venue: NSE, relation: "Banks react to RBI policy, liquidity and bond yields"}
-    - {name: "Government-securities funds and gilt ETFs", venue: NSE, kind: debt, row: "India 10-year G-sec yield (%)", relation: "Indian bond prices move inversely to Indian yields"}
+  - name: Nifty 50 / Sensex
+    venue: NSE
+    row: Nifty 50
+    relation: Broad Indian equity benchmarks
+  - name: Bank Nifty constituents
+    venue: NSE
+    relation: Banks react to RBI policy, liquidity and bond yields
+  - name: Government-securities funds and gilt ETFs
+    venue: NSE
+    kind: debt
+    row: India 10-year G-sec yield (%)
+    relation: Indian bond prices move inversely to Indian yields
   geopolitics:
-    - {name: "MCX Crude Oil Mini", venue: MCX, row: "MCX crude mini (INR/bbl)", relation: "Supply-route and sanction news feeds into oil prices"}
-    - {name: "MCX Gold Ten", venue: MCX, row: "MCX gold ten (INR/10 g)", relation: "Gold is commonly bought in periods of geopolitical stress; not guaranteed"}
-    - {name: "Defence stocks (HAL, BEL)", venue: NSE, relation: "Order books depend on defence spending"}
+  - name: MCX Crude Oil Mini
+    venue: MCX
+    row: MCX crude mini (INR/bbl)
+    relation: Supply-route and sanction news feeds into oil prices
+  - name: MCX Gold Ten
+    venue: MCX
+    row: MCX gold ten (INR/10 g)
+    relation: Gold is commonly bought in periods of geopolitical stress; not guaranteed
+  - name: Defence stocks (HAL, BEL)
+    venue: NSE
+    relation: Order books depend on defence spending
+    symbols:
+    - HAL
+    - BEL
+    exchange: NSE
   defence:
-    - {name: "HAL / Bharat Electronics", venue: NSE, relation: "Indian defence suppliers: orders depend on government spending"}
+  - name: HAL / Bharat Electronics
+    venue: NSE
+    relation: 'Indian defence suppliers: orders depend on government spending'
+    symbols:
+    - HAL
+    - BEL
+    exchange: NSE
   tech:
-    - {name: "Nifty IT (TCS, Infosys, HCL Tech, Wipro)", venue: NSE, relation: "Exposed to global technology spending and AI demand"}
+  - name: Nifty IT (TCS, Infosys, HCL Tech, Wipro)
+    venue: NSE
+    relation: Exposed to global technology spending and AI demand
+    symbols: *id001
+    exchange: NSE
   deals:
-    - {name: "Companies named in the deal", venue: "NSE if listed", relation: "Stock of the target and acquirer is directly affected; check whether it is listed in India"}
-# Company-name matches: if a headline or story text contains the keyword, show the stock.
+  - name: Companies named in the deal
+    venue: NSE if listed
+    relation: Stock of the target and acquirer is directly affected; check whether it is listed in India
 names:
-  - {keywords: ["reliance"], name: "Reliance Industries", venue: NSE}
-  - {keywords: ["infosys"], name: "Infosys", venue: NSE}
-  - {keywords: ["tcs", "tata consultancy"], name: "TCS", venue: NSE}
-  - {keywords: ["hdfc bank"], name: "HDFC Bank", venue: NSE}
-  - {keywords: ["icici bank"], name: "ICICI Bank", venue: NSE}
-  - {keywords: ["state bank of india", "sbi"], name: "State Bank of India", venue: NSE}
-  - {keywords: ["adani"], name: "Adani group stocks", venue: NSE}
-  - {keywords: ["tata motors"], name: "Tata Motors", venue: NSE}
-  - {keywords: ["ongc"], name: "ONGC", venue: NSE}
+- keywords:
+  - reliance
+  name: Reliance Industries
+  venue: NSE
+  symbols:
+  - RELIANCE
+  exchange: NSE
+- keywords:
+  - infosys
+  name: Infosys
+  venue: NSE
+  symbols:
+  - INFY
+  exchange: NSE
+- keywords:
+  - tcs
+  - tata consultancy
+  name: TCS
+  venue: NSE
+  symbols:
+  - TCS
+  exchange: NSE
+- keywords:
+  - hdfc bank
+  name: HDFC Bank
+  venue: NSE
+  symbols:
+  - HDFCBANK
+  exchange: NSE
+- keywords:
+  - icici bank
+  name: ICICI Bank
+  venue: NSE
+  symbols:
+  - ICICIBANK
+  exchange: NSE
+- keywords:
+  - state bank of india
+  - sbi
+  name: State Bank of India
+  venue: NSE
+  symbols:
+  - SBIN
+  exchange: NSE
+- keywords:
+  - adani
+  name: Adani group stocks
+  venue: NSE
+  symbols:
+  - ADANIENT
+  - ADANIPORTS
+  exchange: NSE
+- keywords:
+  - tata motors
+  name: Tata Motors
+  venue: NSE
+  symbols:
+  - TATAMOTORS
+  exchange: NSE
+- keywords:
+  - ongc
+  name: ONGC
+  venue: NSE
+  symbols:
+  - ONGC
+  exchange: NSE
+sectors:
+  Banks and finance:
+  - name: Bank and financial stocks / ETFs
+    symbols:
+    - BANKBEES
+    - HDFCBANK
+    - ICICIBANK
+    - SBIN
+    - BAJFINANCE
+    exchange: NSE
+    relation: 'Lenders and financiers: exposed to credit growth, funding costs and regulation'
+  IT and software:
+  - name: IT services stocks / ETFs
+    symbols:
+    - ITBEES
+    - TCS
+    - INFY
+    - HCLTECH
+    - WIPRO
+    exchange: NSE
+    relation: Earn mostly in dollars from US/EU clients; exposed to tech spending and the rupee
+  Chips and AI hardware:
+  - name: Technology-linked names
+    symbols:
+    - TCS
+    - INFY
+    exchange: NSE
+    relation: 'Indirect: Indian IT demand follows global technology spending; direct chip names mostly trade abroad'
+  Pharma and healthcare:
+  - name: Pharma stocks / ETFs
+    symbols:
+    - PHARMABEES
+    - SUNPHARMA
+    - CIPLA
+    - DRREDDY
+    exchange: NSE
+    relation: Exposed to US generic pricing, FDA actions and domestic demand
+  Autos and EVs:
+  - name: Auto stocks
+    symbols:
+    - MARUTI
+    - M&M
+    - BAJAJ-AUTO
+    - EICHERMOT
+    exchange: NSE
+    relation: Exposed to vehicle demand, input costs and fuel prices
+  Energy and power:
+  - name: Power and energy stocks
+    symbols:
+    - NTPC
+    - POWERGRID
+    - TATAPOWER
+    - COALINDIA
+    exchange: NSE
+    relation: Exposed to power demand, fuel costs and regulated tariffs
+  Metals and mining:
+  - name: Metal stocks
+    symbols:
+    - TATASTEEL
+    - JSWSTEEL
+    - HINDALCO
+    - VEDL
+    exchange: NSE
+    relation: Priced off global metal prices and China demand
+  Consumer and retail:
+  - name: Consumer stocks
+    symbols:
+    - HINDUNILVR
+    - ITC
+    - NESTLEIND
+    - TITAN
+    exchange: NSE
+    relation: Exposed to rural/urban demand and input costs
+  Real estate and infrastructure:
+  - name: Real estate and infra stocks
+    symbols:
+    - DLF
+    - LT
+    - ULTRACEMCO
+    - GODREJPROP
+    exchange: NSE
+    relation: Exposed to interest rates, government capex and commodity input costs
+  Telecom and media:
+  - name: Telecom stocks
+    symbols:
+    - BHARTIARTL
+    - IDEA
+    exchange: NSE
+    relation: Exposed to tariffs, subscriber growth and spectrum costs
+  Defence and aerospace:
+  - name: Defence stocks
+    symbols:
+    - HAL
+    - BEL
+    exchange: NSE
+    relation: Order books depend on government defence spending
+  Aviation, shipping and logistics:
+  - name: Aviation and logistics stocks
+    symbols:
+    - INDIGO
+    - ADANIPORTS
+    - CONCOR
+    exchange: NSE
+    relation: Exposed to fuel costs, traffic and freight rates
+  Chemicals and agriculture:
+  - name: Agri and chemical stocks
+    symbols:
+    - UPL
+    - PIDILITIND
+    - COROMANDEL
+    exchange: NSE
+    relation: Exposed to crop cycles, monsoon and input prices

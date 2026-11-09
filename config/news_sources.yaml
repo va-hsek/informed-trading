@@ -80,6 +80,37 @@ feeds:
   - {name: "Guardian Europe",          category: world, region: europe, mode: rss, url: "https://www.theguardian.com/world/europe-news/rss", status: to_verify}
   - {name: "Guardian Economics",       category: world, region: europe, mode: rss, url: "https://www.theguardian.com/business/economics/rss", status: to_verify}
   - {name: "Eurozone and UK companies (via Google News)", category: world, region: europe, mode: gnews, query: "(Europe OR UK OR Germany OR France) (shares OR earnings OR energy OR sanctions) when:1d"}
+  # ---- sector coverage (to_verify) ----
+  - {name: "Mint Companies",           category: india, region: india, mode: rss, url: "https://www.livemint.com/rss/companies", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Mint Industry",            category: india, region: india, mode: rss, url: "https://www.livemint.com/rss/industry", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Mint Economy",             category: india, region: india, mode: rss, url: "https://www.livemint.com/rss/economy", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Mint Technology",          category: india, region: india, mode: rss, url: "https://www.livemint.com/rss/technology", status: to_verify, assume_tz: "+05:30"}
+  - {name: "BusinessLine Companies",   category: india, region: india, mode: rss, url: "https://www.thehindubusinessline.com/companies/feeder/default.rss", status: to_verify, assume_tz: "+05:30"}
+  - {name: "BusinessLine Economy",     category: india, region: india, mode: rss, url: "https://www.thehindubusinessline.com/economy/feeder/default.rss", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Business Standard Companies", category: india, region: india, mode: rss, url: "https://www.business-standard.com/rss/companies-101.rss", status: to_verify, assume_tz: "+05:30"}
+  - {name: "ET Tech",                  category: india, region: india, mode: rss, url: "https://economictimes.indiatimes.com/tech/rssfeeds/13357270.cms", status: to_verify, assume_tz: "+05:30"}
+  - {name: "Indian Express Economy",   category: india, region: india, mode: rss, url: "https://indianexpress.com/section/business/economy/feed/", status: to_verify, assume_tz: "+05:30"}
+  - {name: "NYT Technology",           category: tech, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", status: to_verify, paywalled: true}
+  - {name: "NYT Health",               category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml", status: to_verify, paywalled: true}
+  - {name: "NYT Energy and Environment", category: world, region: americas, mode: rss, url: "https://rss.nytimes.com/services/xml/rss/nyt/EnergyEnvironment.xml", status: to_verify, paywalled: true}
+  - {name: "BBC Technology",           category: tech, mode: rss, url: "https://feeds.bbci.co.uk/news/technology/rss.xml", status: to_verify}
+  - {name: "BBC Health",               category: world, mode: rss, url: "https://feeds.bbci.co.uk/news/health/rss.xml", status: to_verify}
+  - {name: "BBC Science and Environment", category: world, mode: rss, url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", status: to_verify}
+  - {name: "The Verge",                category: tech, region: americas, mode: rss, url: "https://www.theverge.com/rss/index.xml", status: to_verify}
+  - {name: "Ars Technica",             category: tech, region: americas, mode: rss, url: "https://feeds.arstechnica.com/arstechnica/index", status: to_verify}
+  - {name: "Banks and finance (via Google News)",    category: world, mode: gnews, query: "(banks OR lenders OR NBFC OR insurers OR fintech) (results OR profit OR regulator) when:1d"}
+  - {name: "IT and software (via Google News)",      category: world, mode: gnews, query: "(IT services OR software OR cloud OR cybersecurity) (results OR deal OR layoffs) when:1d"}
+  - {name: "Pharma and healthcare (via Google News)", category: world, mode: gnews, query: "(pharma OR drugmaker OR FDA OR hospital OR biotech) when:1d"}
+  - {name: "Autos and EVs (via Google News)",        category: world, mode: gnews, query: "(automaker OR electric vehicle OR carmaker OR two-wheeler OR EV sales) when:1d"}
+  - {name: "Energy and power (via Google News)",     category: world, mode: gnews, query: "(renewable OR solar OR power demand OR coal OR nuclear OR utilities) when:1d"}
+  - {name: "Metals and mining (via Google News)",    category: world, mode: gnews, query: "(steel OR aluminium OR copper OR iron ore OR lithium OR mining) when:1d"}
+  - {name: "Consumer and retail (via Google News)",  category: world, mode: gnews, query: "(FMCG OR retailer OR consumer demand OR e-commerce OR restaurants) when:1d"}
+  - {name: "Real estate and infrastructure (via Google News)", category: world, mode: gnews, query: "(real estate OR housing OR cement OR infrastructure OR railways) when:1d"}
+  - {name: "Telecom and media (via Google News)",    category: world, mode: gnews, query: "(telecom OR 5G OR spectrum OR streaming OR broadband) when:1d"}
+  - {name: "Defence and aerospace (via Google News)", category: world, mode: gnews, query: "(defence contract OR aerospace OR Boeing OR Airbus OR drones) when:1d"}
+  - {name: "Chips and AI hardware (via Google News)", category: world, mode: gnews, query: "(semiconductor OR chipmaker OR Nvidia OR TSMC OR data centre) when:1d"}
+  - {name: "Aviation, shipping, logistics (via Google News)", category: world, mode: gnews, query: "(airline OR shipping OR freight OR ports OR logistics) when:1d"}
+  - {name: "Chemicals and agriculture (via Google News)", category: world, mode: gnews, query: "(chemicals OR fertiliser OR crop OR monsoon OR sugar OR wheat) when:1d"}
   # ---- tech ----
   - {name: "TechCrunch",              category: tech, mode: rss, url: "https://techcrunch.com/feed/", status: verified}
   # ---- headline-only via Google News search (covers outlets without usable feeds) ----
@@ -96,31 +127,39 @@ feeds:
   - {name: "India markets news",           category: india, mode: gnews, query: "(RBI OR rupee OR Sensex OR Nifty OR India inflation) when:2d"}
 
 limits:
-  max_items_per_feed: 30
-  max_age_hours: 60               # items older than this are ignored
-  max_articles_read: 260          # hard cap on LLM-read articles per run (controls cost)
+  max_items_per_feed: 90
+  edition_anchor_ist: "05:30"      # the window runs from this time yesterday to now; at a 05:30 run that is exactly 24 hours
+  window_hours: 24
+  max_articles_read: 780          # hard cap on LLM-read articles per run (controls cost)
   max_article_chars: 12000        # text sent to the model per article
-  min_article_chars: 600          # shorter text counts as paywalled / truncated
+  min_article_chars: 150          # short pieces are kept; only pages with a paywall/CAPTCHA marker or under 150 characters go to the archive fallbacks
   max_claims_per_article: 8        # enough to tell most of a story; each claim is still verified against the article
   max_paragraph_claims: 3         # claims per printed paragraph
-  front_page_stories: 10
-  max_stories_per_section: 14        # default cap; see section_caps for the regions you care most about
+  front_page_stories: 30
+  max_stories_per_section: 42        # default cap; see section_caps for the regions you care most about
   calendar_horizon_days: 21
   calendar_review_max_age_days: 7
-  in_brief_max: 150                # headlines listed without a summary
+  in_brief_max: 450                # headlines listed without a summary
   # Per-section printed-story caps: India, USA and Europe get most room; the rest show only the most important/trending.
-  section_caps: {"India": 40, "USA and Americas": 40, "Europe": 40, "Markets and macro": 25, "Energy and metals": 20, "Tech and AI": 16,
-                 "Deals and corporate": 16, "Asia-Pacific": 10, "Middle East": 10, "Official releases": 12}
+  section_caps: {"India": 120, "USA and Americas": 120, "Europe": 120, "Markets and macro": 75, "Energy and metals": 60, "Tech and AI": 48,
+                 "Deals and corporate": 48, "Asia-Pacific": 30, "Middle East": 30, "Official releases": 36, "Sectors": 240}
+  sector_story_cap: 24            # per sector inside the Sectors section
   # Per-region cap on articles READ by the model (rest are listed in brief). Keeps cost bounded and balanced.
-  read_caps: {"india": 90, "americas": 90, "europe": 70, "apac": 20, "middleeast": 20, "other": 40}
+  read_caps: {"india": 270, "americas": 270, "europe": 210, "apac": 60, "middleeast": 60, "other": 120}
   trending_bonus_per_extra_source: 1.5
+  parallel_workers: 8              # articles are read in parallel so a run takes minutes, not an hour
+  max_cost_usd_per_run: 8.0        # hard stop: reading ends and the rest are listed as headlines if the running estimate passes this
+  headline_search:                 # last resort for unreadable/blocked/headline-only items: find the same story on a readable page
+    enabled: true
+    max_per_run: 150
+    model: claude-haiku-5-5
+    tool_type: web_search_20250305  # check Anthropic's docs for the current version string if rejected
 
 llm:
   extract_model: claude-haiku-5-5      # model strings from Anthropic's published list
-  # Estimated list prices in USD per million tokens, used ONLY for the cost log. Sources disagree;
-  # these are deliberately the higher figures. Check Anthropic's pricing page and edit.
-  price_input_per_mtok: 1.0
-  price_output_per_mtok: 5.0
+  # List prices in USD per million tokens, used for the cost estimate and the spending stop. Check Anthropic's pricing page and edit.
+  price_input_per_mtok: 0.10       # Claude Haiku 5.5, prompts up to 100k tokens (platform.claude.com pricing page, checked 9 Nov 2026)
+  price_output_per_mtok: 0.50
 
 # Topic keywords (case-insensitive, whole-word). The first matching topic group decides the section.
 topics:
@@ -136,6 +175,23 @@ topics:
   deals:      ["acquire", "acquires", "acquisition", "takeover", "buyout", "merger", "stake", "ipo", "deal valued"]
   defence:    ["defence", "defense", "missile", "navy", "military", "weapons"]
 
+# Sector keywords (whole-word, case-insensitive). The first matching sector is the story's sector; stories with a sector are grouped
+# under "Sectors" unless they belong on the Front page or in energy/metals, deals, or official releases.
+sectors:
+  "Banks and finance":     ["bank", "banks", "banking", "lender", "lenders", "nbfc", "loan", "loans", "credit", "insurer", "insurers", "insurance", "fintech", "mutual fund", "hdfc", "icici", "sbi", "bajaj finance"]
+  "IT and software":       ["it services", "software", "saas", "cloud", "cybersecurity", "infosys", "tcs", "wipro", "hcl", "accenture", "salesforce", "microsoft", "oracle"]
+  "Chips and AI hardware": ["semiconductor", "semiconductors", "chip", "chips", "chipmaker", "tsmc", "nvidia", "gpu", "data centre", "data center", "memory chip", "ai infrastructure", "coreweave"]
+  "Pharma and healthcare": ["pharma", "pharmaceutical", "drugmaker", "drug", "fda", "biotech", "hospital", "hospitals", "vaccine", "healthcare", "medicine", "clinical trial"]
+  "Autos and EVs":         ["auto", "automaker", "carmaker", "car sales", "electric vehicle", "electric vehicles", "ev", "tesla", "maruti", "two-wheeler", "tractor", "tyre", "tyres"]
+  "Energy and power":      ["renewable", "renewables", "solar", "wind power", "power demand", "electricity", "utility", "utilities", "coal", "nuclear", "power grid", "refiner", "refining", "green hydrogen"]
+  "Metals and mining":     ["steel", "aluminium", "aluminum", "copper", "zinc", "iron ore", "mining", "miner", "miners", "lithium", "nickel", "rare earth", "rare earths"]
+  "Consumer and retail":   ["fmcg", "retail", "retailer", "retailers", "consumer", "consumers", "restaurant", "restaurants", "apparel", "e-commerce", "ecommerce", "jewellery", "quick commerce"]
+  "Real estate and infrastructure": ["real estate", "housing", "property", "realty", "infrastructure", "construction", "cement", "railway", "railways", "highway", "mortgage"]
+  "Telecom and media":     ["telecom", "5g", "spectrum", "broadband", "streaming", "media", "airtel", "jio", "vodafone", "netflix", "disney"]
+  "Defence and aerospace": ["defence", "defense", "aerospace", "aircraft", "boeing", "airbus", "missile", "missiles", "drone", "drones", "fighter jet"]
+  "Aviation, shipping and logistics": ["airline", "airlines", "aviation", "shipping", "tanker", "tankers", "ports", "freight", "logistics", "indigo", "container"]
+  "Chemicals and agriculture": ["chemical", "chemicals", "fertiliser", "fertilizer", "agriculture", "crop", "crops", "wheat", "sugar", "monsoon", "pesticide", "rice"]
+
 # Region keywords. A feed's own `region` wins; otherwise the first matching region below is used.
 regions:
   india:      ["india", "indian", "rbi", "sensex", "nifty", "rupee", "mumbai", "new delhi", "sebi", "bse", "nse", "adani", "reliance", "infosys", "tata"]
@@ -150,5 +206,5 @@ regions:
 calendar_refresh:
   model: claude-sonnet-5-5
   search_tool_type: web_search_20250305
-  price_input_per_mtok: 3.0
-  price_output_per_mtok: 15.0
+  price_input_per_mtok: 2.0        # Claude Sonnet 5.5
+  price_output_per_mtok: 10.0

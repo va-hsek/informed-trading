@@ -92,57 +92,106 @@ def wayback_snapshot(url: str, published: Optional[datetime], http_json: Callabl
     return snap["url"], ts
 
 
+MEMENTO_API = "https://timetravel.mementoweb.org/api/json/"
+MIN_PARTIAL_CHARS = 150
+
+
+def _usable(text: str, min_chars: int) -> Optional[str]:
+    """None when text is usable. A CAPTCHA or block page is never usable."""
+    low = text[:600].lower()
+    if "captcha" in low or "verify you are human" in low or "access denied" in low or "enable javascript" in low:
+        return "block or CAPTCHA page"
+    return looks_paywalled(text, min_chars)
+
+
+def memento_snapshots(url: str, published: Optional[datetime], http_json: Callable) -> list[str]:
+    """Closest copy held by ANY web archive known to the Memento aggregator (Wayback, archive.today, Perma, national archives...)."""
+    stamp = (published or datetime.now(timezone.utc)).strftime("%Y%m%d%H%M%S")
+    data = http_json(MEMENTO_API + stamp + "/" + url, [])
+    m = (data or {}).get("mementos") or {}
+    uris = []
+    for key in ("closest", "next", "prev"):
+        u = (m.get(key) or {}).get("uri")
+        for x in (u if isinstance(u, list) else [u]):
+            if isinstance(x, str) and x.startswith("http") and x not in uris:
+                uris.append(x)
+    return uris[:3]
+
+
 def read_article(item, robots: RobotsCache, http_get: Callable, http_json: Callable,
-                 min_chars: int = 600, max_chars: int = 12000) -> dict:
-    """Returns {text, via, snapshot_date, reason}. via is 'direct', 'wayback', 'archive.today', 'feed summary' or None."""
-    out = {"text": "", "via": None, "snapshot_date": None, "reason": ""}
+                 min_chars: int = MIN_PARTIAL_CHARS, max_chars: int = 12000) -> dict:
+    """Returns {text, via, snapshot_date, reason, partial}.
+
+    Order: the page itself -> Wayback -> any archive via Memento -> archive.today -> partial text / feed summary.
+    Every failure (paywall, block, robots, error, short page) moves to the next step; nothing is skipped silently.
+    via is 'direct', 'wayback', 'archive', 'archive.today', 'partial', 'feed summary' or None."""
+    out = {"text": "", "via": None, "snapshot_date": None, "reason": "", "partial": False}
     if item.headline_only:
         out["reason"] = "headline only (link is a search redirect, article text not readable)"
         return out
     url = item.origin_url or item.link
     why = ""
+    best = ""                                              # longest paywall-free text seen, kept as a last resort
     if robots.allowed(url):
         try:
             text = extract_text(http_get(url).decode("utf-8", "replace"))
-            why = looks_paywalled(text, min_chars) or ""
+            why = _usable(text, min_chars) or ""
             if not why:
                 out.update(text=text[:max_chars], via="direct")
                 return out
+            if "paywall marker" not in why and len(text) >= MIN_PARTIAL_CHARS:
+                best = text
         except FetchError as e:
             why = f"page fetch failed ({e})"
     else:
         why = "robots.txt disallows automated access"
-    if item.paywalled or "paywall" in why or "characters" in why:
+
+    def attempt(label: str, fetch_url: str, via: str, snap: Optional[str] = None) -> bool:
+        nonlocal why
         try:
-            snap = wayback_snapshot(url, item.published, http_json)
-            if snap:
-                text = extract_text(http_get(wayback_raw_url(snap[0])).decode("utf-8", "replace"))
-                w = looks_paywalled(text, min_chars)
-                if not w:
-                    out.update(text=text[:max_chars], via="wayback", snapshot_date=snap[1].date().isoformat())
-                    return out
-                why += f"; Wayback copy unusable ({w})"
-            else:
-                why += "; no suitable Wayback snapshot"
+            if not robots.allowed(fetch_url):
+                why += f"; {label}: robots.txt disallows"
+                return False
+            text = extract_text(http_get(fetch_url).decode("utf-8", "replace"))
+            w = _usable(text, min_chars)
+            if w:
+                why += f"; {label} unusable ({w})"
+                return False
+            out.update(text=text[:max_chars], via=via, snapshot_date=snap)
+            return True
         except FetchError as e:
-            why += f"; Wayback lookup failed ({e})"
-    if (item.paywalled or "paywall" in why) and getattr(robots, "archive_fails", 0) < ARCHIVE_MAX_FAILS:
-        aurl = ARCHIVE_TODAY + url
-        try:
-            if not robots.allowed(aurl):
-                raise FetchError("archive.today robots.txt disallows automated access")
-            text = extract_text(http_get(aurl).decode("utf-8", "replace"))
-            w = looks_paywalled(text, min_chars)
-            if w or "captcha" in text[:400].lower() or "verify you are human" in text[:400].lower():
-                raise FetchError(w or "CAPTCHA page")
-            out.update(text=text[:max_chars], via="archive.today", snapshot_date=None)
+            why += f"; {label} failed ({e})"
+            return False
+
+    try:
+        snap = wayback_snapshot(url, item.published, http_json)
+        if snap:
+            if attempt("Wayback", wayback_raw_url(snap[0]), "wayback", snap[1].date().isoformat()):
+                return out
+        else:
+            why += "; no suitable Wayback snapshot"
+    except FetchError as e:
+        why += f"; Wayback lookup failed ({e})"
+    try:
+        for uri in memento_snapshots(url, item.published, http_json):
+            if "web.archive.org" in uri:
+                continue                                   # already tried above
+            if "archive.ph" in uri or "archive.today" in uri or "archive.is" in uri:
+                continue                                   # handled below with its own failure breaker
+            if attempt("archive copy", uri, "archive"):
+                return out
+    except (FetchError, ValueError, AttributeError) as e:
+        why += f"; archive lookup failed ({e})"
+    if getattr(robots, "archive_fails", 0) < ARCHIVE_MAX_FAILS:
+        if attempt("archive.today", ARCHIVE_TODAY + url, "archive.today"):
             robots.archive_fails = 0
             return out
-        except FetchError as e:
-            robots.archive_fails = getattr(robots, "archive_fails", 0) + 1
-            why += f"; archive.today unusable ({e})"
-    if item.summary and len(item.summary) >= 120:
-        out.update(text=item.summary[:max_chars], via="feed summary", reason=why)
+        robots.archive_fails = getattr(robots, "archive_fails", 0) + 1
+    if best:
+        out.update(text=best[:max_chars], via="partial", partial=True, reason=why)
+        return out
+    if item.summary and len(item.summary) >= 60:
+        out.update(text=item.summary[:max_chars], via="feed summary", partial=True, reason=why)
         return out
     out["reason"] = why or "no readable text"
     return out

@@ -15,13 +15,13 @@ from typing import Callable, Optional
 import yaml
 
 from collectors import registry
-from collectors.broker_alice import AliceBroker, BrokerError, refresh_store
+from collectors.broker_alice import AliceBroker, BrokerError, derive_spec, plausible_margin, refresh_store
 from core import technical
 from core.agreement import compare
 from core import dashboard as dash
 from core import newslink
 from core.hedge import hedge_table, render_hedge
-from core.prices import PriceDataError, PriceStore, read_csv
+from core.prices import write_csv, PriceDataError, PriceStore, read_csv
 from core.render_html import md_to_html
 from core.report import inr, px, render_asset, render_report
 from core.secrets import load_secrets
@@ -31,7 +31,7 @@ from core.validation import check_observation
 
 IST = timezone(timedelta(hours=5, minutes=30))
 ASSET_ORDER = ["crude", "natgas", "gold", "silver"]
-SPEC_OK = {"confirmed", "cross_checked"}
+SPEC_OK = {"confirmed", "cross_checked", "broker_confirmed"}
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -57,6 +57,39 @@ def spec_problem(key: str, inst: dict) -> Optional[str]:
     if m is None or isinstance(m, bool) or not isinstance(m, (int, float)) or m <= 0:
         return f"Multiplier for {key} is not set in config/instruments.yaml."
     return None
+
+
+def broker_margin(key: str, inst: dict, direction: str, state: dict, price: float) -> tuple[Optional[float], Optional[str], str]:
+    """Margin for one lot straight from Alice Blue. Returns (margin, problem, note). Fails closed on anything implausible."""
+    info = (state.get("nearest") or {}).get(key)
+    br = state.get("broker")
+    if br is None or not info:
+        return None, "Alice Blue is not connected, so the live margin could not be read.", ""
+    mult = inst.get("multiplier")
+    lot = info.get("lot_size")
+    if not mult or not lot:
+        return None, "lot size or multiplier unknown, so the margin request cannot be built.", ""
+    ck = (key, direction)
+    if ck in state["cache"]:
+        return state["cache"][ck]
+    tried = []
+    res = (None, "margin request did not return a plausible figure", "")
+    for qty in (lot, 1):                                             # the API's quantity unit for MCX is not documented: try both, accept only a plausible one
+        try:
+            m = br.margin_one_lot(info["instrument"], inst["exchange"], price, direction, qty)
+        except BrokerError as e:
+            tried.append(str(e))
+            continue
+        if plausible_margin(m, price, float(mult)):
+            note = (f"Margin per lot INR {m:,.0f} read from Alice Blue (basket-margin for {info['symbol']}, {direction}, quantity {qty:g}, "
+                    f"price {price:g}); lot size {lot:g} from the contract master.")
+            res = (m, None, note)
+            break
+        tried.append(f"quantity {qty:g} gave {m:,.0f}, outside 2-50% of contract value {price * float(mult):,.0f}")
+    else:
+        res = (None, "Alice Blue margin could not be used (" + "; ".join(tried)[:300] + "). Enter it in config/margins.yaml if you want sizing.", "")
+    state["cache"][ck] = res
+    return res
 
 
 def margin_for(key: str, margins: dict, today: date, max_age: int) -> tuple[Optional[float], Optional[str]]:
@@ -137,18 +170,48 @@ def build_action_report(
     obs, errors = registry.collect(drivers, secrets, now, root / "config" / "manual_inputs.yaml", http_json, http_raw)
     checked = {d["id"]: check_observation(d, obs.get(d["metric"]), now, fetch_error=errors.get(d["metric"])) for d in drivers}
 
+    # 1b. India 10-year yield (stored daily so changes build up)
+    try:
+        from collectors import india_yield
+        rec = india_yield.fetch_latest(now.date(), http_raw or __import__("collectors.http", fromlist=["get"]).get)
+        india_yield.append_history(root / "data" / "history" / "india_10y_benchmark.csv", rec)
+    except Exception as e:  # noqa: BLE001
+        dq.append(f"India 10-year yield not refreshed ({type(e).__name__}: {str(e)[:160]}); a stored reading is shown only if recent.")
+
     # 2. prices
+    bstate: dict = {"broker": None, "nearest": {}, "cache": {}}
     if refresh_prices:
         try:
             if not (secrets.get("ALICEBLUE_USER_ID") and secrets.get("ALICEBLUE_API_KEY")):
                 raise BrokerError("ALICEBLUE_USER_ID / ALICEBLUE_API_KEY are not set in config/secrets.env")
             broker = AliceBroker(secrets["ALICEBLUE_USER_ID"], secrets["ALICEBLUE_API_KEY"], broker_factory)
             broker.connect()
+            bstate["broker"] = broker
             for key, inst in insts["instruments"].items():
                 try:
-                    refresh_store(broker, store, key, inst["exchange"], inst["symbol_hint"], now.date(), cfg.get("price_history_days", 400))
+                    info = refresh_store(broker, store, key, inst["exchange"], inst["symbol_hint"], now.date(), cfg.get("price_history_days", 400))
+                    if info.get("nearest"):
+                        bstate["nearest"][key] = info["nearest"]
+                        mult, why = derive_spec(inst, info["nearest"]["lot_size"])
+                        old = inst.get("multiplier")
+                        if mult is None:
+                            dq.append(f"Contract spec for {key}: broker value not used ({why}).")
+                        elif old is not None and abs(float(old) - mult) > 1e-9:
+                            insts["instruments"][key] = {**inst, "spec_status": "conflicting", "multiplier": None,
+                                                         "lot_text": f"CONFLICT: config says multiplier {old}, Alice Blue implies {mult:g}"}
+                            dq.append(f"Contract spec for {key}: config multiplier {old} disagrees with Alice Blue ({mult:g}). Sizing refused until you resolve it.")
+                        else:
+                            insts["instruments"][key] = {**inst, "multiplier": mult, "spec_status": "broker_confirmed",
+                                                         "lot_text": f"{info['nearest']['lot_size']:g} (Alice Blue contract master, {info['nearest']['symbol']})"}
                 except Exception as e:  # noqa: BLE001
                     dq.append(f"Price refresh failed for {key}: {type(e).__name__}: {e}")
+            for slug, text in (cfg.get("index_fetch") or {}).items():
+                try:
+                    df = broker.index_history(text, datetime.combine(now.date(), datetime.min.time()) - timedelta(days=int(cfg.get("price_history_days", 400))),
+                                              datetime.combine(now.date(), datetime.min.time()) + timedelta(days=1))
+                    write_csv(df, store.root / "index" / f"{slug}.csv")
+                except Exception as e:  # noqa: BLE001
+                    dq.append(f"Index {text}: not refreshed ({type(e).__name__}: {e}); stored data used if fresh enough.")
         except BrokerError as e:
             dq.append(f"Broker unavailable, stored prices used: {e}")
 
@@ -202,6 +265,13 @@ def build_action_report(
             else:
                 problem = spec_problem(key, inst)
                 margin, mprob = margin_for(key, margins, now.date(), int(cfg.get("margin_max_age_days", 3)))
+                bnote = ""
+                if bstate["broker"] is not None:                       # the live broker figure wins over the hand-entered file
+                    bm, bprob, bnote = broker_margin(key, inst, direction, bstate, tech.last_close)
+                    if bm is not None:
+                        margin, mprob = bm, None
+                    elif margin is None and bprob:
+                        mprob = bprob
                 if problem:
                     why_none = "Sizing withheld: " + problem
                 elif mprob:
@@ -215,6 +285,8 @@ def build_action_report(
                             float(cfg["margin_buffer"]), 1, cfg.get("costs_roundtrip_per_lot"),
                             float(cfg["scenario_underlying_move_pct"]), float(cfg["scenario_capital_loss_pct"]))
                         scenario.notes.append(f"Stop used: {how} (the farther of the ATR and structure stops).")
+                        if bnote:
+                            scenario.notes.append(bnote)
                     except SizingRefused as e:
                         why_none = f"Sizing withheld: {e}"
         else:
@@ -272,7 +344,7 @@ def build_action_report(
                     dq.append(f"Dashboard: {r['label']}: {r['problem']}")
         except Exception as e:  # noqa: BLE001
             extra.append(f"## Markets at a glance\n\nNot available: dashboard failed ({type(e).__name__}: {e}).")
-    extra.append("\n".join(["## Where the news meets tradable instruments", ""] + newslink.load_and_render(root, now, rows_d)))
+    extra.append("\n".join(["## Where the news meets tradable instruments", ""] + newslink.load_and_render(root, now, rows_d, bstate['broker'].resolve_symbol if bstate['broker'] is not None else None)))
     md = render_report(now.astimezone(IST), blocks, dq, ev, summary, footer, cash, extra)
     return md, meta
 
@@ -282,7 +354,8 @@ def main(argv=None) -> int:
     ap.add_argument("--refresh-prices", action="store_true", help="pull fresh candles from Alice Blue first")
     a = ap.parse_args(argv)
     now = datetime.now(IST)
-    md, meta = build_action_report(ROOT, now, load_secrets(), refresh_prices=a.refresh_prices)
+    sec = load_secrets()
+    md, meta = build_action_report(ROOT, now, sec, refresh_prices=a.refresh_prices or bool(sec.get('ALICEBLUE_USER_ID') and sec.get('ALICEBLUE_API_KEY')))
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     stem = f"action_{now:%Y-%m-%d_%H%M}"

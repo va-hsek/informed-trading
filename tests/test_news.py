@@ -8,7 +8,7 @@ import pytest
 from collectors.http import FetchError
 from news.articles import RobotsCache, extract_text, looks_paywalled, read_article, wayback_raw_url, wayback_snapshot
 from news.claims import copies_source, extract_claims, numbers, parse_claims, verify_claim
-from news.feeds import Item, collect_items, parse_feed, tag_topics
+from news.feeds import Item, collect_items, edition_window, parse_feed, tag_topics
 from news.run_news import build_news_report
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -59,14 +59,16 @@ def test_collect_items_age_future_dedupe_and_failures():
     xml = rss([("Fresh gold story", "https://a/1", "Fri, 06 Nov 2026 10:00:00 +0000", ""),
                ("Fresh gold story", "https://a/2", "Fri, 06 Nov 2026 10:05:00 +0000", ""),         # duplicate title
                ("Old story", "https://a/3", "Mon, 26 Oct 2026 10:00:00 +0000", ""),               # too old
-               ("Future story", "https://a/4", "Sun, 08 Nov 2026 23:00:00 +0000", "")])           # future-dated
+               ("Future story", "https://a/4", "Sun, 08 Nov 2026 23:00:00 +0000", ""),           # future-dated
+               ("Undated story", "https://a/5", "", "")])                                         # no date: cannot be checked, dropped
 
     def get(url):
         if url == "https://ok":
             return xml
         raise FetchError("HTTP 404 for https://bad")
-    items, cov = collect_items(feeds, NOW.astimezone(timezone.utc), get, 60, 25)
+    items, cov = collect_items(feeds, NOW.astimezone(timezone.utc), get, NOW.astimezone(timezone.utc) - timedelta(hours=60), 25)
     assert [i.title for i in items] == ["Fresh gold story"]
+    assert "1 undated" in cov[0]["reason"]
     assert cov[0]["ok"] and cov[0]["kept"] == 1 and not cov[1]["ok"] and "404" in cov[1]["reason"]
 
 
@@ -298,3 +300,11 @@ def test_unreadable_article_is_listed_not_summarised(tmp_path):
     md, meta = build_news_report(make_root(tmp_path), NOW, {}, make_net(article_ok=False), lambda u, p=None: {}, fake_llm())
     assert "US commercial crude stocks dropped" not in md
     assert meta["stats"]["unreadable"] >= 1
+
+
+def test_edition_window_runs_from_0530_ist_yesterday():
+    ist = timezone(timedelta(hours=5, minutes=30))
+    f = lambda y, mo, d, h, mi: edition_window(datetime(y, mo, d, h, mi, tzinfo=ist).astimezone(timezone.utc)).astimezone(ist)
+    assert f(2026, 11, 9, 5, 30) == datetime(2026, 11, 8, 5, 30, tzinfo=ist)       # 05:30 run: exactly 24 hours
+    assert f(2026, 11, 9, 11, 39) == datetime(2026, 11, 8, 5, 30, tzinfo=ist)      # later run: from 05:30 yesterday
+    assert f(2026, 11, 9, 3, 0) == datetime(2026, 11, 7, 5, 30, tzinfo=ist)        # before 05:30: previous edition's window

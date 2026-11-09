@@ -67,6 +67,12 @@ def load_series(src: str, root: Path, store: PriceStore, secrets: dict, now: dat
             raise FetchError(f"{p.relative_to(store.root.parent.parent) if store.root.parent.parent in p.parents else p} not supplied")
         df = read_csv(p)
         return [(i.date(), float(r["close"])) for i, r in df.iterrows()]
+    if kind == "india10y":
+        from collectors.india_yield import read_history
+        h = read_history(root / "data" / "history" / "india_10y_benchmark.csv")
+        if not h:
+            raise FetchError("no India 10-year readings stored yet (the run fetches the AMC tracker; see collectors/india_yield.py)")
+        return h
     if kind == "manual":
         s = _manual_series(root / "config" / "manual_inputs.yaml", name)
         if not s:

@@ -12,7 +12,7 @@ from typing import Optional
 from news.claims import norm, numbers
 
 IST = timezone(timedelta(hours=5, minutes=30))
-SECTIONS = ["Front page", "India", "USA and Americas", "Europe", "Markets and macro", "Energy and metals", "Tech and AI",
+SECTIONS = ["Front page", "India", "USA and Americas", "Europe", "Markets and macro", "Energy and metals", "Sectors", "Tech and AI",
             "Deals and corporate", "Asia-Pacific", "Middle East", "Official releases"]
 REGION_SECTION = {"india": "India", "apac": "Asia-Pacific", "europe": "Europe", "americas": "USA and Americas", "middleeast": "Middle East"}
 TOPIC_SCORE = {"crude": 5, "natgas": 5, "gold": 5, "silver": 5, "rates_fed": 4, "usd_inr": 4, "defence": 3,
@@ -23,9 +23,10 @@ TOPIC_SCORE = {"crude": 5, "natgas": 5, "gold": 5, "silver": 5, "rates_fed": 4, 
 class Source:
     name: str
     url: str
-    via: str = "direct"             # direct | wayback | archive.today | feed summary
+    via: str = "direct"             # direct | wayback | archive | archive.today | partial | feed summary | headline search
     snap: Optional[str] = None
     archive: str = ""               # manual archive link for paywalled items
+    orig: str = ""                  # outlet of the unreadable original, when the story was found by headline search
 
 
 @dataclass
@@ -45,6 +46,7 @@ class Story:
     paras: list[Para] = field(default_factory=list)
     score: float = 0.0
     aka: list[str] = field(default_factory=list)      # headlines of stories merged into this one
+    sectors: list[str] = field(default_factory=list)
 
     @property
     def sources(self) -> list[Source]:
@@ -68,6 +70,8 @@ def section_for(item) -> str:
         return "Energy and metals"
     if "deals" in topics:
         return "Deals and corporate"
+    if getattr(item, "sectors", None):
+        return "Sectors"
     for r in ([item.feed_region] if item.feed_region else []) + regions:
         if r in REGION_SECTION:
             return REGION_SECTION[r]
@@ -137,6 +141,12 @@ def _link(src: Source) -> str:
     out = f"[{lab}]({src.url})"
     if src.via == "archive.today":
         out += " (read from an archive.today copy)"
+    elif src.via == "archive":
+        out += " (read from a web-archive copy)"
+    elif src.via == "partial":
+        out += " (only part of the article was readable)"
+    elif src.via == "headline search":
+        out += f" (the original, {src.orig}, could not be read; same story found by searching its headline)"
     if src.via == "wayback":
         out += f" (Wayback copy of {src.snap})"
     elif src.via == "feed summary":
@@ -146,8 +156,10 @@ def _link(src: Source) -> str:
     return out
 
 
-def render_story(s: Story, per_para: int) -> str:
-    lines = [f"### {s.headline}"]
+def render_story(s: Story, per_para: int, level: int = 3, tag: str = "") -> str:
+    lines = [f"{'#' * level} {s.headline}"]
+    if tag:
+        lines.append(f"*{tag}*")
     corroborating = []
     for p in s.paras:
         if not p.claims:

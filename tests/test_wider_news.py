@@ -39,7 +39,7 @@ def test_archive_today_captcha_or_block_fails_closed_and_trips_breaker():
         g = getter(reply)
         rb = RobotsCache(g)
         r = read_article(item(paywalled=True), rb, g, lambda *a, **k: {})
-        assert r["via"] is None and "archive.today unusable" in r["reason"]
+        assert r["via"] is None and "archive.today" in r["reason"] and "no suitable Wayback" in r["reason"]
     g = getter(FetchError("HTTP 403"))
     rb = RobotsCache(g)
     for _ in range(5):
@@ -138,3 +138,101 @@ def test_ensure_fresh_skips_when_recent_and_never_raises(tmp_path):
         def complete_with_search(self, *a, **k):
             raise RuntimeError("x")
     assert "failed" in cr.ensure_fresh(tmp_path, NOW, {}, cfg, llm=Bad())
+
+
+# ---------------- archive chain, headline search, short text, sectors, spending stop ----------------
+from news.headline_search import find_alternative, sig_words
+from test_news import NOW as NEWS_NOW, fake_llm, make_net, make_root
+from news.run_news import build_news_report
+
+BLOCKED = b"<html><body><p>Access denied</p></body></html>"
+
+
+def test_memento_archive_other_than_archive_today_is_used():
+    def g(url):
+        if url.endswith("robots.txt"):
+            return b"User-agent: *\nAllow: /"
+        if url.startswith("https://perma.example/"):
+            return ARTICLE_HTML.encode()
+        return PAYWALL
+    memento = lambda url, p=None: ({"mementos": {"closest": {"uri": ["https://perma.example/abc"]}}} if "mementoweb" in url else {})
+    r = read_article(item(paywalled=True), RobotsCache(g), g, memento)
+    assert r["via"] == "archive" and r["text"] == ARTICLE_TEXT
+
+
+def test_blocked_page_goes_to_archives_and_short_text_is_kept():
+    short = b"<html><body><article><p>Gold rose 1.2% on Friday as traders bet on a Fed pause, officials said in a brief statement released today, adding that further data on inflation and jobs would decide the next move.</p></article></body></html>"
+    g = lambda u: b"User-agent: *\nAllow: /" if u.endswith("robots.txt") else short
+    r = read_article(item(), RobotsCache(g), g, lambda *a, **k: {})
+    assert r["via"] == "direct" and r["text"].startswith("Gold rose")            # a 170-character piece is not discarded
+    # a page that blocks us falls through to the archives and, with nothing there, is reported with every step tried
+    g2 = getter(FetchError("HTTP 403"))
+    r2 = read_article(item(), RobotsCache(g2), g2, lambda *a, **k: {})
+    assert r2["via"] is None and "paywall marker" in r2["reason"] and "Wayback" in r2["reason"] and "archive.today" in r2["reason"]
+
+
+class SearchLLM:
+    def __init__(self, urls):
+        self.urls, self.search_count = urls, 0
+
+    def complete_with_search(self, *a, **k):
+        self.search_count += 1
+        return json.dumps({"urls": self.urls})
+
+
+def page(title, body):
+    return f"<html><head><title>{title}</title></head><body><article><p>{body}</p></article></body></html>".encode()
+
+
+def test_headline_search_accepts_matching_readable_page_and_rejects_others():
+    title = "Tata Motors plans new electric vehicle plant in Gujarat"
+    good = page("Tata Motors plans new electric vehicle plant in Gujarat | Mint", "Tata Motors said on Sunday that it will build a new electric vehicle plant in Gujarat with a planned investment announced by the company. " * 2)
+    other = page("Cricket: India win series", "India won the series on Sunday after a long and tense final match played in front of a full house at the stadium. " * 2)
+    paywalled = PAYWALL
+
+    def g(url):
+        if url.endswith("robots.txt"):
+            return b"User-agent: *\nAllow: /"
+        return {"https://a.example/1": paywalled, "https://b.example/2": other, "https://c.example/3": good}[url]
+    llm = SearchLLM([{"url": "https://a.example/1", "publisher": "A"}, {"url": "https://b.example/2", "publisher": "B"},
+                     {"url": "https://c.example/3", "publisher": "Mint"}, ])
+    alt = find_alternative(title, "https://orig.example/x", llm, "t", RobotsCache(g), g)
+    assert alt and alt["url"] == "https://c.example/3" and alt["publisher"] == "Mint"
+    llm2 = SearchLLM([{"url": "https://b.example/2", "publisher": "B"}])
+    assert find_alternative(title, "https://orig.example/x", llm2, "t", RobotsCache(g), g) is None       # unrelated page refused
+    llm3 = SearchLLM([{"url": "https://orig.example/y", "publisher": "same"}])
+    assert find_alternative(title, "https://orig.example/x", llm3, "t", RobotsCache(g), g) is None       # same site is not an alternative
+
+
+def test_sig_words_ignore_noise():
+    assert "tata" in sig_words("Tata Motors plans new plant") and "with" not in sig_words("with the plant")
+
+
+def test_sector_story_lands_in_sectors_section_and_unreadable_goes_to_brief(tmp_path):
+    root = make_root(tmp_path)
+    cfg_path = root / "config" / "news_sources.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text())
+    cfg["sectors"] = {"Chips and AI hardware": ["chip", "chips"]}
+    cfg["limits"]["section_caps"] = {}
+    cfg_path.write_text(yaml.safe_dump(cfg))
+    md, meta = build_news_report(root, NEWS_NOW, {}, make_net(), lambda u, p=None: {}, fake_llm())
+    assert "Chip startup raises $200 million" in md          # at least listed somewhere (headline-only or story)
+    assert meta["latest"]["stories"] is not None
+
+
+def test_spending_stop_leaves_rest_as_headlines(tmp_path):
+    root = make_root(tmp_path)
+    cfg_path = root / "config" / "news_sources.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text())
+    cfg["limits"]["max_cost_usd_per_run"] = 0.0
+    cfg_path.write_text(yaml.safe_dump(cfg))
+    md, meta = build_news_report(root, NEWS_NOW, {}, make_net(), lambda u, p=None: {}, fake_llm())
+    assert meta["stats"]["claims_kept"] == 0 and meta["stats"]["cost_stopped"] >= 1
+    assert "spending stop" in "".join(str(x) for x in [md])
+
+
+def test_search_cost_is_counted():
+    from news.llm import LLM
+    l = LLM("k", "m", None, 0.10, 0.50)
+    l.search_count = 100
+    assert abs(l.est_cost_usd() - 1.0) < 1e-9

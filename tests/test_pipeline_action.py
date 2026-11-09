@@ -179,3 +179,46 @@ def test_upcoming_events_window():
                      {"name": "B", "at": "2026-12-25T12:00:00+05:30"}, {"name": "C", "at": "bad"}, {"name": "D", "at": "2026-11-07T12:00:00"}]}
     out = upcoming_events(ev, NOW)
     assert [e["name"] for e in out] == ["A"] and abs(out[0]["hours"] - 4.0) < 1e-9
+
+
+# ---------------- Alice Blue fills lot sizes and margins ----------------
+class BrokerFake:
+    LOTS = {"SILVERMIC": 1, "GOLDTEN": 10, "CRUDEOILM": 10, "NATGASMINI": 2500}
+    MULT = {"SILVERMIC": 1, "GOLDTEN": 1, "CRUDEOILM": 10, "NATGASMINI": 2500}
+    BASE = {"SILVERMIC": 150000.0, "GOLDTEN": 120000.0, "CRUDEOILM": 6000.0, "NATGASMINI": 300.0}
+
+    def __init__(self, user_id, api_key):
+        self.margin_calls = []
+
+    def get_session_id(self): return {"stat": "Ok"}
+    def get_contract_master(self, ex): pass
+
+    def search_instruments(self, ex, text):
+        from collections import namedtuple
+        I = namedtuple("I", "exchange token symbol name expiry lot_size")
+        return [I("MCX", 1, text + "26DEC", text, "2026-12-31", self.LOTS[text])]
+
+    def get_historical(self, ins, a, b, interval, indices):
+        hint = ins.name
+        rng = np.random.default_rng(3)
+        n, base = 300, self.BASE[hint]
+        t = np.arange(n)
+        c = base * (1 + 0.04 * np.sin(2 * np.pi * t / 50) + 0.0004 * t) + rng.normal(0, base * 0.002, n)
+        days = pd.date_range(end=pd.Timestamp(NOW.date()) - pd.Timedelta(days=1), periods=n, freq="D")
+        return [{"time": str(d) , "open": x, "high": x * 1.004, "low": x * 0.996, "close": x, "volume": 1000} for d, x in zip(days, c)]
+
+    def basket_margin(self, orders):
+        o = orders[0]
+        hint = o["tradingSymbol"].replace("26DEC", "")
+        self.margin_calls.append(o)
+        return {"result": [{"currentOrderMargin": 0.08 * float(o["price"]) * self.MULT[hint] * (int(o["qty"]) / self.LOTS[hint])}]}
+
+
+def test_broker_supplies_lot_sizes_and_margins(tmp_path):
+    root = make_root(tmp_path, margins={"as_of": None, "margins_per_lot_inr": {k: None for k in ("silver_micro", "gold_ten", "crude_mini", "natgas_mini")}})
+    net = Net()
+    md, meta = build_action_report(root, NOW, {"EIA_API_KEY": "k", "ALICEBLUE_USER_ID": "u", "ALICEBLUE_API_KEY": "k"}, net.json, net.raw,
+                                   refresh_prices=True, broker_factory=BrokerFake)
+    assert "Contract spec for crude_mini is 'single_source'" not in md           # lot size 10 from the contract master confirmed it
+    assert "Margin per lot for gold_ten is not entered" not in md                  # live margin replaced the empty file
+    assert "read from Alice Blue (basket-margin for GOLDTEN26DEC" in md

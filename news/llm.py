@@ -12,7 +12,10 @@ from typing import Callable, Optional
 from collectors.http import FetchError
 from core.secrets import redact
 
+import threading
+
 URL = "https://api.anthropic.com/v1/messages"
+_LOCK = threading.Lock()
 
 
 def _post(url: str, headers: dict, body: dict, timeout: int = 90) -> dict:
@@ -53,8 +56,9 @@ class LLM:
             tin, tout = int(u.get("input_tokens", 0)), int(u.get("output_tokens", 0))
         except Exception as e:  # noqa: BLE001
             raise FetchError("Anthropic API returned an unexpected response shape") from e
-        self.tokens_in += tin
-        self.tokens_out += tout
+        with _LOCK:
+            self.tokens_in += tin
+            self.tokens_out += tout
         if self.usage_log:
             self.usage_log.parent.mkdir(parents=True, exist_ok=True)
             with open(self.usage_log, "a") as f:
@@ -76,8 +80,11 @@ class LLM:
             raise FetchError(redact(str(e), {"k": self.api_key})) from e
         text = "".join(b.get("text", "") for b in resp.get("content", []) if b.get("type") == "text")
         u = resp.get("usage", {})
-        self.tokens_in += int(u.get("input_tokens", 0))
-        self.tokens_out += int(u.get("output_tokens", 0))
+        with _LOCK:
+            self.search_count += int((u.get("server_tool_use") or {}).get("web_search_requests", 0))
+        with _LOCK:
+            self.tokens_in += int(u.get("input_tokens", 0))
+            self.tokens_out += int(u.get("output_tokens", 0))
         if self.usage_log:
             self.usage_log.parent.mkdir(parents=True, exist_ok=True)
             with open(self.usage_log, "a") as f:
@@ -85,5 +92,9 @@ class LLM:
                                     "in": int(u.get("input_tokens", 0)), "out": int(u.get("output_tokens", 0)), "search": True}) + "\n")
         return text
 
+    search_count = 0
+    price_per_search = 0.01          # Anthropic list price: $10 per 1,000 web searches
+
     def est_cost_usd(self) -> float:
-        return self.tokens_in / 1e6 * self.price_in + self.tokens_out / 1e6 * self.price_out
+        return (self.tokens_in / 1e6 * self.price_in + self.tokens_out / 1e6 * self.price_out
+                + self.search_count * self.price_per_search)

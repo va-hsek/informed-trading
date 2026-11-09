@@ -46,6 +46,23 @@ All reports are HTML only (`reports/*.html`). Each run reads whatever sources ar
     python3 -m pipeline.run_action    # action report + market dashboard + news-to-instrument table
     python3 -m news.calendar_refresh  # weekly calendar refresh, by date (also runs automatically from the news report)
 
-Paywalled outlets (FT, WSJ, Bloomberg, NYT): direct page, then Wayback, then one polite archive.today request (robots.txt honoured,
-CAPTCHA treated as a failure, stops after 3 failures in a row). Anything still unreadable is a headline with an archive link.
-Suggested schedule (cron, IST machine): `30 5 * * * cd ~/informed-trading && python3 -m news.run_news`
+### News edition
+- Window: only items published from 05:30 IST the previous day (or the most recent 05:30 anchor minus 24 h) up to the run. Undated items are dropped and counted.
+- Caps (tripled): 780 articles read per run (India 270, Americas 270, Europe 210, APAC 60, Middle East 60, other 120). Spending stop: `max_cost_usd_per_run` (8.0).
+- Reading chain: direct, Wayback, any Memento archive, archive.today (robots honoured, stops after 3 failures), partial text (>=150 chars) or feed summary,
+  then headline search (web search finds the same story at another outlet; the code fetches it and checks headline overlap before using it, and attributes it to that outlet).
+  Short pieces are kept.
+- Sectors section: 13 sector groups, tagged by keyword from the sector feeds.
+- Every claim must appear verbatim in the article text, with its numbers; otherwise it is dropped.
+
+### Cost per run (Anthropic list prices, Nov 2026)
+Haiku 5.5 extraction about $0.0006 per article (max about $0.45), headline search about $0.011 each (150 searches about $1.65), weekly calendar refresh about $0.05/day.
+Typical $1-1.5/day, ceiling about $2.1/day. Actual spend is logged in `data/news_usage.jsonl` and printed in the run stats.
+
+### Action report and Alice Blue
+Run on your own machine (Alice Blue needs a daily login). Put `ALICEBLUE_USER_ID` and `ALICEBLUE_API_KEY` in `config/secrets.env`, `pip install pya3`.
+It then fetches lot sizes (contract master), per-lot margin (basket margin), index history (INDICES master) and validates every symbol each run.
+Anything unconfirmed is flagged and the report fails closed. No index CSVs are needed.
+India 10-year yield: Alice Blue has no bond yield, so it comes from the ABSL AMC Daily Fixed Income Tracker PDF (single source, kept in `data/history/india_10y_benchmark.csv`).
+
+Suggested schedule: GitHub Actions `.github/workflows/morning-edition.yml` (05:30 IST) and `calendar-refresh.yml` (weekly).

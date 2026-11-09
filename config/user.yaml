@@ -40,3 +40,10 @@ costs_roundtrip_per_lot: null
 # Folders
 data_dir: data
 backtest_cost_roundtrip_pct: 0.10   # ASSUMED round-trip cost as % of price for the backtest; not verified
+
+# Index candles fetched from Alice Blue (INDICES master, exact name match) into data/prices/index/<name>.csv for the dashboard.
+# If a name does not match exactly, the report says so and lists nearby names so you can correct the text.
+index_fetch:
+  nifty50: "NIFTY 50"
+  sensex: "SENSEX"
+  indiavix: "INDIA VIX"

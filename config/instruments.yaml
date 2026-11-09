@@ -25,6 +25,8 @@ instruments:
     tick_size: 1
     quote_unit: "INR per kg"
     lot_text: "1 kg"
+    lot_size_candidates: [1]   # lot sizes the exchange has published; the Alice Blue figure is accepted only if it is one of these
+    units_per_quote: 1
     spec_status: cross_checked
   gold_ten:
     asset: gold
@@ -35,6 +37,8 @@ instruments:
     tick_size: 1
     quote_unit: "INR per 10 g"
     lot_text: "10 g"
+    lot_size_candidates: [10]   # lot sizes the exchange has published; the Alice Blue figure is accepted only if it is one of these
+    units_per_quote: 10
     spec_status: cross_checked
   crude_mini:
     asset: crude
@@ -45,6 +49,8 @@ instruments:
     tick_size: 1
     quote_unit: "INR per barrel"
     lot_text: "10 barrels"
+    lot_size_candidates: [10]   # lot sizes the exchange has published; the Alice Blue figure is accepted only if it is one of these
+    units_per_quote: 1
     spec_status: single_source      # confirm in your platform, then set to 'confirmed'
   natgas_mini:
     asset: natgas
@@ -55,6 +61,8 @@ instruments:
     tick_size: 0.1
     quote_unit: "INR per mmBtu"
     lot_text: "UNCONFIRMED (250 or 2,500 mmBtu)"
+    lot_size_candidates: [250, 2500]   # lot sizes the exchange has published; the Alice Blue figure is accepted only if it is one of these
+    units_per_quote: 1
     spec_status: conflicting
 
 # Equity names the hedge selector may consider. Chosen each run by MEASURED rolling

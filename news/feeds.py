@@ -33,6 +33,7 @@ class Item:
     topics: list[str] = field(default_factory=list)
     regions: list[str] = field(default_factory=list)
     feed_region: str = ""
+    sectors: list[str] = field(default_factory=list)
 
 
 def _clean(s: Optional[str]) -> str:
@@ -133,8 +134,24 @@ def norm_title(t: str) -> str:
     return re.sub(r"[^a-z0-9 ]", "", t.lower()).strip()
 
 
-def collect_items(feeds: list[dict], now: datetime, http_get: Callable, max_age_hours: float, max_per_feed: int):
-    """Returns (items, coverage) where coverage lists each feed with ok/failed and a reason."""
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def edition_window(now: datetime, anchor: str = "05:30", hours: float = 24) -> datetime:
+    """Start of the news window, in UTC: `hours` before the most recent `anchor` o'clock (IST).
+
+    Run at 05:30 IST -> the last 24 hours. Run at 11:39 IST -> from 05:30 IST yesterday (30 hours)."""
+    hh, mm = (int(x) for x in anchor.split(":"))
+    n = now.astimezone(IST)
+    a = n.replace(hour=hh, minute=mm, second=0, microsecond=0)
+    if n < a:
+        a -= timedelta(days=1)
+    return (a - timedelta(hours=hours)).astimezone(timezone.utc)
+
+
+def collect_items(feeds: list[dict], now: datetime, http_get: Callable, window_start: datetime, max_per_feed: int):
+    """Returns (items, coverage). Only items PUBLISHED inside [window_start, now] are kept; undated items are dropped
+    and counted, because their age cannot be checked."""
     items: list[Item] = []
     coverage: list[dict] = []
     seen_titles, seen_links = set(), set()
@@ -144,11 +161,14 @@ def collect_items(feeds: list[dict], now: datetime, http_get: Callable, max_age_
         except FetchError as e:
             coverage.append({"feed": src["name"], "ok": False, "reason": str(e), "kept": 0})
             continue
-        kept = 0
+        kept = undated = 0
         for it in got[:max_per_feed]:
-            if it.published is not None and (now - it.published).total_seconds() / 3600 > max_age_hours:
+            if it.published is None:
+                undated += 1
                 continue
-            if it.published is not None and it.published > now + timedelta(hours=2):
+            if it.published < window_start:
+                continue
+            if it.published > now + timedelta(hours=2):
                 continue                                       # future-dated: ignore
             k = norm_title(it.title)
             if k in seen_titles or it.link in seen_links:
@@ -157,7 +177,7 @@ def collect_items(feeds: list[dict], now: datetime, http_get: Callable, max_age_
             seen_links.add(it.link)
             items.append(it)
             kept += 1
-        coverage.append({"feed": src["name"], "ok": True, "reason": "", "kept": kept})
+        coverage.append({"feed": src["name"], "ok": True, "reason": (f"{undated} undated item(s) dropped" if undated else ""), "kept": kept})
     return items, coverage
 
 

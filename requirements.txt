@@ -7,3 +7,4 @@ lxml
 defusedxml
 pya3
 pytest
+pypdf

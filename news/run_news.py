@@ -22,7 +22,8 @@ from core.secrets import load_secrets
 from news import calendar_refresh as cal_refresh
 from news.articles import RobotsCache, read_article
 from news.claims import extract_claims
-from news.feeds import collect_items, tag_topics
+from news.feeds import collect_items, edition_window, tag_topics
+from news.headline_search import find_alternative
 from news.llm import LLM
 from news.paper import (SECTIONS, Para, Source, Story, item_score, merge_stories, render_calendar, render_glance, render_story,
                         section_for)
@@ -36,17 +37,17 @@ def _d(dt: Optional[datetime]) -> str:
 
 
 def _relevant(it) -> bool:
-    return bool(it.topics or it.regions or it.feed_region)
+    return bool(it.topics or it.regions or it.feed_region or it.sectors)
 
 
 def _primary_region(it) -> str:
     return it.feed_region or (it.regions[0] if it.regions else "other")
 
 
-def pick_for_reading(items, lim) -> list:
+def pick_for_reading(items, lim, include_headline_only: bool = False) -> list:
     """Best items first, but with a per-region budget so India, USA and Europe get most of the reading."""
     caps = lim.get("read_caps") or {}
-    pool = sorted([i for i in items if not i.headline_only and _relevant(i)],
+    pool = sorted([i for i in items if (include_headline_only or not i.headline_only) and _relevant(i)],
                   key=lambda i: (-item_score(i), -(i.published.timestamp() if i.published else 0)))
     used: dict[str, int] = {}
     out = []
@@ -66,10 +67,13 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
                       llm: Optional[LLM] = None) -> tuple[str, dict]:
     cfg = yaml.safe_load((root / "config" / "news_sources.yaml").read_text())
     lim = cfg["limits"]
-    items, coverage = collect_items(cfg["feeds"], now.astimezone(timezone.utc), http_get, lim["max_age_hours"], lim["max_items_per_feed"])
+    now_utc = now.astimezone(timezone.utc)
+    win_start = edition_window(now_utc, lim.get("edition_anchor_ist", "05:30"), float(lim.get("window_hours", 24)))
+    items, coverage = collect_items(cfg["feeds"], now_utc, http_get, win_start, lim["max_items_per_feed"])
     for it in items:
         it.topics = tag_topics(it, cfg["topics"])
         it.regions = tag_topics(it, cfg.get("regions") or {})
+        it.sectors = tag_topics(it, cfg.get("sectors") or {})
 
     llm_note = ""
     if llm is None:
@@ -79,38 +83,79 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
         else:
             llm_note = "ANTHROPIC_API_KEY is not set: articles were not read, so this edition lists headlines only."
 
-    readable = pick_for_reading(items, lim)
+    hs = lim.get("headline_search") or {}
+    hs_on = bool(hs.get("enabled")) and llm is not None
+    hs_left = int(hs.get("max_per_run", 150))
+    max_cost = float(lim.get("max_cost_usd_per_run", 8.0))
+    readable = pick_for_reading(items, lim, include_headline_only=hs_on)
     robots = RobotsCache(http_get)
 
-    stats = {"read_direct": 0, "read_wayback": 0, "read_summary": 0, "read_archive": 0, "unreadable": 0, "claims_kept": 0, "claims_dropped": 0,
+    stats = {"read_direct": 0, "read_wayback": 0, "read_summary": 0, "read_archive": 0, "read_search": 0, "read_partial": 0, "cost_stopped": 0, "unreadable": 0, "claims_kept": 0, "claims_dropped": 0,
              "extract_errors": 0}
     stories: list[Story] = []
     unread: list[tuple] = []
     drops: list[str] = []
-    for it in readable:
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    lock = threading.Lock()
+    hs_box = {"left": hs_left}
+    via_stat = {"direct": "read_direct", "wayback": "read_wayback", "archive": "read_archive", "archive.today": "read_archive",
+                "headline search": "read_search", "partial": "read_partial", "feed summary": "read_summary"}
+
+    def process(it):
+        """Reads one item end to end. Returns (kind, payload). Runs in a worker thread; shared state is only touched under `lock`."""
         if llm is None:
-            unread.append((it, "model not configured"))
-            continue
+            return "unread", "model not configured"
+        if llm.est_cost_usd() >= max_cost:
+            return "cost", f"spending stop reached (${max_cost:.2f} per run)"
         art = read_article(it, robots, http_get, http_json, lim["min_article_chars"], lim["max_article_chars"])
+        alt = None
+        if (not art["text"] or art.get("partial")) and hs_on:
+            with lock:
+                go = hs_box["left"] > 0
+                hs_box["left"] -= 1 if go else 0
+            if go:
+                alt = find_alternative(it.title, it.origin_url or it.link, llm, hs.get("tool_type", "web_search_20250305"), robots, http_get,
+                                       lim["min_article_chars"], lim["max_article_chars"])
+        if alt:
+            art = {"text": alt["text"], "via": "headline search", "snapshot_date": None, "reason": "", "alt": alt}
         if not art["text"]:
-            stats["unreadable"] += 1
-            unread.append((it, art["reason"]))
-            continue
-        stats[{"direct": "read_direct", "wayback": "read_wayback", "archive.today": "read_archive", "feed summary": "read_summary"}[art["via"]]] += 1
+            return "unreadable", art["reason"]
         kept, dropped, err = extract_claims(llm, it.title, art["text"], lim["max_claims_per_article"])
         if err:
+            return "error", err
+        return "ok", (art, kept, dropped)
+
+    workers = max(1, int(lim.get("parallel_workers", 8)))
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        results = list(ex.map(process, readable))
+    for it, (kind, payload) in zip(readable, results):
+        if kind == "unread":
+            unread.append((it, payload))
+        elif kind == "cost":
+            stats["cost_stopped"] += 1
+            unread.append((it, payload))
+        elif kind == "unreadable":
+            stats["unreadable"] += 1
+            unread.append((it, payload))
+        elif kind == "error":
             stats["extract_errors"] += 1
-            unread.append((it, f"claim extraction failed: {err}"))
-            continue
-        stats["claims_kept"] += len(kept)
-        stats["claims_dropped"] += len(dropped)
-        drops += [f"{it.source}: {why}" for _, why in dropped]          # reasons only: unverified text is never printed
-        if not kept:
-            continue
-        src = Source(it.publisher or it.source, it.link, art["via"], art["snapshot_date"], _archive(it))
-        st = Story(it.title, section_for(it), it.topics, it.regions, it.category, it.published, [Para(kept, src)])
-        st.score = item_score(it) + min(len(kept), 6) / 2
-        stories.append(st)
+            unread.append((it, f"claim extraction failed: {payload}"))
+        else:
+            art, kept, dropped = payload
+            stats[via_stat[art["via"]]] += 1
+            stats["claims_kept"] += len(kept)
+            stats["claims_dropped"] += len(dropped)
+            drops += [f"{it.source}: {why}" for _, why in dropped]          # reasons only: unverified text is never printed
+            if not kept:
+                continue
+            if art["via"] == "headline search":
+                src = Source(art["alt"]["publisher"], art["alt"]["url"], "headline search", None, _archive(it), it.publisher or it.source)
+            else:
+                src = Source(it.publisher or it.source, it.link, art["via"], art["snapshot_date"], _archive(it))
+            st = Story(it.title, section_for(it), it.topics, it.regions, it.category, it.published, [Para(kept, src)], sectors=it.sectors)
+            st.score = item_score(it) + min(len(kept), 6) / 2
+            stories.append(st)
 
     stories = merge_stories(stories)
     bonus = float(lim.get("trending_bonus_per_extra_source", 1.5))
@@ -145,6 +190,18 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
             continue
         cap = int((lim.get("section_caps") or {}).get(sec, lim.get("max_stories_per_section", 14)))
         L += [f"## {sec}", ""]
+        if sec == "Sectors":
+            per_sec = int(lim.get("sector_story_cap", 24))
+            for sname in cfg.get("sectors") or {}:
+                grp = [x for x in lst if x.sectors and x.sectors[0] == sname][:per_sec]
+                if not grp:
+                    continue
+                L += [f"### {sname}", ""]
+                for x in grp:
+                    reg = {"india": "India", "americas": "USA and Americas", "europe": "Europe", "apac": "Asia-Pacific", "middleeast": "Middle East"}
+                    tag = ", ".join(reg[r] for r in x.regions if r in reg)
+                    L += [render_story(x, per, level=4, tag=tag)]
+            continue
         for s in lst[:cap]:
             L += [render_story(s, per)]
         if len(lst) > cap:
@@ -170,8 +227,9 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     for c in coverage:
         L.append(f"| {c['feed']} | {'ok' if c['ok'] else 'FAILED: ' + c['reason'][:90]} | {c['kept']} |")
     L.append("")
-    L.append(f"- Articles read: {stats['read_direct']} directly, {stats['read_wayback']} via Wayback, {stats['read_archive']} via archive.today, {stats['read_summary']} from feed summaries; "
-             f"{stats['unreadable']} could not be read; {stats['extract_errors']} extraction errors.")
+    L.append(f"- Articles read: {stats['read_direct']} directly, {stats['read_wayback']} via Wayback, {stats['read_archive']} via other archives, "
+             f"{stats['read_search']} by finding the same story elsewhere via its headline, {stats['read_partial']} partially, {stats['read_summary']} from feed summaries; "
+             f"{stats['unreadable']} could not be read, {stats['cost_stopped']} left unread by the spending stop; {stats['extract_errors']} extraction errors.")
     L.append(f"- Claims kept {stats['claims_kept']}, dropped by the guard {stats['claims_dropped']}.")
     if llm is not None:
         L.append(f"- Model use this run: {llm.tokens_in:,} input and {llm.tokens_out:,} output tokens (estimated ${llm.est_cost_usd():.3f} at the prices in config/news_sources.yaml).")
@@ -181,10 +239,10 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     meta = {"stats": stats, "coverage": coverage, "sections": {s: len(by_sec[s]) for s in SECTIONS},
             "stories": len(stories), "sources": len({p.source.url for s in stories for p in s.paras})}
     latest = {"generated": now.isoformat(),
-              "stories": [{"headline": s.headline, "section": s.section, "topics": s.topics, "regions": s.regions,
+              "stories": [{"headline": s.headline, "section": s.section, "topics": s.topics, "regions": s.regions, "sectors": s.sectors,
                            "sources": [{"name": x.name, "url": x.url} for x in s.sources],
                            "text": " ".join(c for p in s.paras for c in p.claims)} for s in stories],
-              "headlines": [{"headline": it.title, "topics": it.topics, "regions": it.regions, "source": it.publisher or it.source, "url": it.link}
+              "headlines": [{"headline": it.title, "topics": it.topics, "regions": it.regions, "sectors": it.sectors, "source": it.publisher or it.source, "url": it.link}
                             for it, _ in hl]}
     meta["latest"] = latest
     return "\n".join(L) + "\n", meta
