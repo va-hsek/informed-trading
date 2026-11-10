@@ -1,0 +1,1332 @@
+{
+ "at": "2026-11-10T12:12:21.188049+05:30",
+ "summary": {
+  "feeds_total": 104,
+  "feeds_ok": 104,
+  "articles_tested": 312,
+  "articles_read": 198,
+  "via": {
+   "feed summary": 65,
+   "direct": 132,
+   "unreadable": 114,
+   "wayback": 1
+  },
+  "model_all_ok": true,
+  "search_ok": false,
+  "claims_kept_in_sample": 72,
+  "extractions": 20,
+  "extraction_errors": 1
+ },
+ "model": [
+  {
+   "test": "model key",
+   "ok": true,
+   "detail": "provider=gemini model=gemini-3.5-flash-lite"
+  },
+  {
+   "test": "model: plain call",
+   "ok": true,
+   "detail": "0.9s, reply: '{\"ok\": true}'"
+  },
+  {
+   "test": "model: JSON mode",
+   "ok": true,
+   "detail": "1.7s, reply: '{\\n  \"claims\": []\\n}'"
+  },
+  {
+   "test": "model: web search",
+   "ok": false,
+   "detail": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. "
+  }
+ ],
+ "feeds": [
+  {
+   "feed": "RBI press releases",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Federal Reserve press",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "EIA Today in Energy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "PIB (Govt of India)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "BBC Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 55,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "CNBC Top News",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "WSJ Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Bloomberg Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Financial Times",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 11,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Economic Times Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Mint Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BusinessLine Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 60,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Business Standard Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "The Hindu Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 60,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "SCMP Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Straits Times Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 23,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "ABC Australia Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Guardian Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 40,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "DW Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "ECB press",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 15,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "NPR Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Al Jazeera",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Nikkei Asia (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 12,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Asia markets news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 23,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Europe markets news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 22,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Americas markets news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 28,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Middle East energy news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Deals news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 64,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Hindustan Times Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 14,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Times of India Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "ET Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 2
+  },
+  {
+   "feed": "ET Industry",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Moneycontrol (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Indian Express (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Financial Express (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 84,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "India top stories (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 21,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "NYT Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 48,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "NYT Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Washington Post Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 12,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "MarketWatch Top Stories",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "WSJ US Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "WSJ World News",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "WSJ Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Bloomberg Economics",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Bloomberg Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Bloomberg Politics",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "FT Markets",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 2
+  },
+  {
+   "feed": "FT World",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "FT Companies",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "CNBC Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "CNBC Finance",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "CNBC Energy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "CNBC Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Fox Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 25,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "US corporate news (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Euronews Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "France 24 Business",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 30,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Politico Europe",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BBC World",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 33,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BBC Europe",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 31,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Guardian Europe",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 19,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Guardian Economics",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Eurozone and UK companies (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Mint Companies",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Mint Industry",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Mint Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Mint Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BusinessLine Companies",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 60,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BusinessLine Economy",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 60,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Business Standard Companies",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 35,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "ET Tech",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 50,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "NYT Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 24,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "NYT Health",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 2
+  },
+  {
+   "feed": "NYT Energy and Environment",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BBC Technology",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 21,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BBC Health",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 55,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "BBC Science and Environment",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 41,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "The Verge",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Ars Technica",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Banks and finance (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 27,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "IT and software (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 28,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Pharma and healthcare (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Autos and EVs (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 79,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Energy and power (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 93,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Metals and mining (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 83,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Consumer and retail (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 23,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Real estate and infrastructure (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 96,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Telecom and media (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Defence and aerospace (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 27,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Chips and AI hardware (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Aviation, shipping, logistics (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Chemicals and agriculture (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "TechCrunch",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 20,
+   "tested": 3,
+   "read": 3
+  },
+  {
+   "feed": "Reuters (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "FT (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 82,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Bloomberg (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "WSJ (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Axios (via Google News)",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 10,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Crude oil news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 100,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Natural gas news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 23,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Gold news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 75,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Silver news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 84,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "Fed and yields news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 61,
+   "tested": 3,
+   "read": 0
+  },
+  {
+   "feed": "India markets news",
+   "feed_ok": true,
+   "feed_reason": "",
+   "items_in_feed": 56,
+   "tested": 3,
+   "read": 0
+  }
+ ],
+ "hosts": [
+  {
+   "host": "news.google.com",
+   "tested": 108,
+   "read": 0,
+   "top_reason": "headline only (link is a search redirect, article text not readable)"
+  },
+  {
+   "host": "pib.gov.in",
+   "tested": 3,
+   "read": 0,
+   "top_reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or se"
+  },
+  {
+   "host": "www.ft.com",
+   "tested": 12,
+   "read": 11,
+   "top_reason": "page fetch failed (HTTP 403 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure"
+  },
+  {
+   "host": "economictimes.indiatimes.com",
+   "tested": 12,
+   "read": 11,
+   "top_reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fail"
+  },
+  {
+   "host": "www.nytimes.com",
+   "tested": 15,
+   "read": 14,
+   "top_reason": "page fetch failed (HTTP 403 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure"
+  },
+  {
+   "host": "www.bbc.co.uk",
+   "tested": 18,
+   "read": 18,
+   "top_reason": ""
+  },
+  {
+   "host": "www.cnbc.com",
+   "tested": 15,
+   "read": 15,
+   "top_reason": ""
+  },
+  {
+   "host": "www.livemint.com",
+   "tested": 15,
+   "read": 15,
+   "top_reason": ""
+  },
+  {
+   "host": "www.wsj.com",
+   "tested": 12,
+   "read": 12,
+   "top_reason": ""
+  },
+  {
+   "host": "www.bloomberg.com",
+   "tested": 12,
+   "read": 12,
+   "top_reason": ""
+  },
+  {
+   "host": "www.thehindubusinessline.com",
+   "tested": 9,
+   "read": 9,
+   "top_reason": ""
+  },
+  {
+   "host": "www.theguardian.com",
+   "tested": 9,
+   "read": 9,
+   "top_reason": ""
+  },
+  {
+   "host": "www.business-standard.com",
+   "tested": 6,
+   "read": 6,
+   "top_reason": ""
+  },
+  {
+   "host": "www.rbi.org.in",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.federalreserve.gov",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.eia.gov",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.thehindu.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.scmp.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.straitstimes.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.abc.net.au",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.dw.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.ecb.europa.eu",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.npr.org",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.aljazeera.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.hindustantimes.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "timesofindia.indiatimes.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.washingtonpost.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.marketwatch.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.foxbusiness.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.euronews.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.france24.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.politico.eu",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "www.theverge.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "arstechnica.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  },
+  {
+   "host": "techcrunch.com",
+   "tested": 3,
+   "read": 3,
+   "top_reason": ""
+  }
+ ],
+ "top_failure_reasons": [
+  [
+   "headline only (link is a search redirect, article text not readable)",
+   108
+  ],
+  [
+   "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or se",
+   3
+  ],
+  [
+   "page fetch failed (HTTP 403 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
+   2
+  ],
+  [
+   "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fail",
+   1
+  ]
+ ],
+ "headline_search": [],
+ "headline_search_errors": [],
+ "extraction_sample": [
+  {
+   "feed": "RBI press releases",
+   "title": "Auction of Government of India Dated Security",
+   "via": "feed summary",
+   "kept": 2,
+   "dropped": 4,
+   "error": "",
+   "sample_claim": "The auction of the security will take place on November 13, 2026, using the multiple price method.",
+   "drop_reasons": [
+    "evidence excerpt not found word for word in the article",
+    "evidence excerpt not found word for word in the article",
+    "evidence excerpt not found word for word in the article"
+   ]
+  },
+  {
+   "feed": "RBI press releases",
+   "title": "Supersession of Board of Directors of Abhyudaya Co-operative Bank Ltd., Mumbai - Extension",
+   "via": "feed summary",
+   "kept": 7,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The Reserve Bank of India initially superseded the Board of Directors of Abhyudaya Co-operative Bank Ltd., Mumbai for one year on November 24, 2023.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "RBI press releases",
+   "title": "State Government Securities - Full Auction Result",
+   "via": "feed summary",
+   "kept": 1,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The auction of State Government Securities was conducted on November 09, 2026, with a total notified amount of 29050 Crore.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "Federal Reserve press",
+   "title": "Federal Reserve Board announces approval of two applications by Mutual Federal Bancorp, MH",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 1,
+   "error": "",
+   "sample_claim": "The Federal Reserve Board announced the approval of two applications on Monday.",
+   "drop_reasons": [
+    "evidence length 4 words is outside 5-40"
+   ]
+  },
+  {
+   "feed": "Federal Reserve press",
+   "title": "Federal Reserve Board announces termination of enforcement action with Allegiant United Ho",
+   "via": "direct",
+   "kept": 2,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The Federal Reserve Board announced the termination of an enforcement action involving Allegiant United Holdings, LLC, Nano Financial Holdings, Inc., and Nano Banc.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "Federal Reserve press",
+   "title": "Federal Reserve Board announces approval of application by The Bank of Nova Scotia",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The Federal Reserve Board announced its approval of an application by The Bank of Nova Scotia on Thursday.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "EIA Today in Energy",
+   "title": "U.S. crude oil imports from Venezuela in July were highest since 2017",
+   "via": "direct",
+   "kept": 7,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "U.S. imports of crude oil from Venezuela reached 701,000 barrels per day in July 2026, which was the highest level since May 2017.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "EIA Today in Energy",
+   "title": "Refineries have shifted production away from gasoline to middle distillates",
+   "via": "direct",
+   "kept": 4,
+   "dropped": 1,
+   "error": "",
+   "sample_claim": "In 2026, high refinery margins for distillate fuel oil and jet fuel led refineries to shift production away from gasoline.",
+   "drop_reasons": [
+    "claim copies 15+ consecutive words from the article"
+   ]
+  },
+  {
+   "feed": "EIA Today in Energy",
+   "title": "Global refinery inputs fell sharply in the second quarter of 2026 before modest recovery",
+   "via": "direct",
+   "kept": 6,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Global crude oil refinery inputs dropped by 4.8 million barrels per day in the second quarter of 2026, according to data from Kpler.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "BBC Business",
+   "title": "Independent bookshop closing after rise in bills",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The independent bookshop The Chicken and Frog announced it will close in Brentwood town centre in January after 14 years of operation.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "BBC Business",
+   "title": "Holiday hunger bill to face final Stormont hurdle",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 1,
+   "error": "",
+   "sample_claim": "The Holiday Meal Payments Bill in the Northern Ireland Assembly faces its final hurdle on Tuesday.",
+   "drop_reasons": [
+    "claim copies 15+ consecutive words from the article"
+   ]
+  },
+  {
+   "feed": "BBC Business",
+   "title": "New chief outlines main issues facing Isle of Man",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Isle of Man chief minister Chris Thomas stated that import reliance, transport disruption risks, and household financial pressure are primary challenges for the new government.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "CNBC Top News",
+   "title": "Trump\u2019s C-SPAN call marks latest surprise post-midterm appearance",
+   "via": "direct",
+   "kept": 5,
+   "dropped": 1,
+   "error": "",
+   "sample_claim": "President Donald Trump made an unexpected call into C-SPAN's evening broadcast on Monday.",
+   "drop_reasons": [
+    "claim copies 15+ consecutive words from the article"
+   ]
+  },
+  {
+   "feed": "CNBC Top News",
+   "title": "TSMC's October sales jump as global chip boom rolls on",
+   "via": "direct",
+   "kept": 6,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Taiwan Semiconductor Manufacturing Co. announced October revenue of 586.89 billion New Taiwan dollars, marking a 59.7% increase year-on-year and a 14.7% monthly rise.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "CNBC Top News",
+   "title": "China\u2019s monthly imports grow at fastest pace in five years as surplus crosses $1 trillion ",
+   "via": "direct",
+   "kept": 0,
+   "dropped": 0,
+   "error": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/",
+   "sample_claim": "",
+   "drop_reasons": []
+  },
+  {
+   "feed": "WSJ Markets",
+   "title": "Stocks Sink in Broad AI Rout Sparked by China's DeepSeek",
+   "via": "feed summary",
+   "kept": 2,
+   "dropped": 1,
+   "error": "",
+   "sample_claim": "United States stocks experienced a mostly lower trading session, led by declines in the Nasdaq index.",
+   "drop_reasons": [
+    "evidence length 4 words is outside 5-40"
+   ]
+  },
+  {
+   "feed": "WSJ Markets",
+   "title": "Comex Gold, Silver Settle Lower",
+   "via": "feed summary",
+   "kept": 2,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Comex gold fell for two out of the past three sessions",
+   "drop_reasons": []
+  },
+  {
+   "feed": "WSJ Markets",
+   "title": "DeepSeek Won't Sink U.S. AI Titans",
+   "via": "feed summary",
+   "kept": 1,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "The selloff of Nvidia, Broadcom and other tech giants is driven by panic that is overblown according to the article.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "Bloomberg Markets",
+   "title": "AI Slump Sends Investors Scouring Emerging Markets for Bargains",
+   "via": "feed summary",
+   "kept": 1,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Stock pickers are turning to emerging markets to find opportunities and escape turbulence in global equities driven by artificial intelligence.",
+   "drop_reasons": []
+  },
+  {
+   "feed": "Bloomberg Markets",
+   "title": "Rare Earth Price Gap Flags Supply Strains Ahead of Trump-Xi Meet",
+   "via": "feed summary",
+   "kept": 1,
+   "dropped": 0,
+   "error": "",
+   "sample_claim": "Rare-earth elements are currently trading outside China at enormous multiples of their domestic value.",
+   "drop_reasons": []
+  }
+ ],
+ "llm": {
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "tokens_in": 19180,
+  "tokens_out": 5339,
+  "searches": 0,
+  "est_cost_usd": 0.0191
+ }
+}
