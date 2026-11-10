@@ -1,50 +1,35 @@
 {
- "at": "2026-11-09T20:25:18.684770+00:00",
+ "at": "2026-11-10T05:49:03.553497+00:00",
  "results": [
   {
    "test": "model key",
-   "ok": true,
-   "detail": "provider=anthropic model=claude-haiku-5-5"
-  },
-  {
-   "test": "model: plain call",
    "ok": false,
-   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
-  },
-  {
-   "test": "model: JSON mode",
-   "ok": false,
-   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
-  },
-  {
-   "test": "model: web search",
-   "ok": false,
-   "detail": "FetchError: model API call failed: HTTP 401: invalid x-api-key"
+   "detail": "no GEMINI_API_KEY or ANTHROPIC_API_KEY set"
   },
   {
    "test": "fetch: BBC business feed",
    "ok": true,
-   "detail": "39,058 bytes in 0.3s"
+   "detail": "40,628 bytes in 0.2s"
   },
   {
    "test": "fetch: Economic Times feed",
    "ok": true,
-   "detail": "40,020 bytes in 0.2s"
+   "detail": "42,325 bytes in 0.2s"
   },
   {
    "test": "fetch: Mint feed",
    "ok": true,
-   "detail": "39,283 bytes in 0.2s"
+   "detail": "38,706 bytes in 0.2s"
   },
   {
    "test": "fetch: Moneycontrol feed",
-   "ok": false,
-   "detail": "HTTP 403 for https://www.moneycontrol.com/rss/business.xml"
+   "ok": true,
+   "detail": "16,296 bytes in 0.4s"
   },
   {
    "test": "fetch: RBI press releases",
    "ok": true,
-   "detail": "165,038 bytes in 1.1s"
+   "detail": "165,038 bytes in 0.3s"
   },
   {
    "test": "fetch: Wayback availability API",
@@ -64,7 +49,7 @@
   {
    "test": "fetch: Google News RSS",
    "ok": true,
-   "detail": "199,547 bytes in 0.5s"
+   "detail": "198,260 bytes in 0.5s"
   }
  ]
 }

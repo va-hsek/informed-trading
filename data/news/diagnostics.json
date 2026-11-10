@@ -1,8 +1,8 @@
 {
- "generated": "2026-11-10T01:55:18.873832+05:30",
+ "generated": "2026-11-10T11:19:03.786192+05:30",
  "provider": null,
  "model": null,
- "llm_preflight_error": "FetchError: model API call failed: HTTP 401: invalid x-api-key",
+ "llm_preflight_error": "",
  "stats": {
   "read_direct": 0,
   "read_wayback": 0,
@@ -19,30 +19,5 @@
  "top_failure_reasons": [],
  "unreadable_samples": [],
  "headline_search_errors": [],
- "feed_failures": [
-  {
-   "feed": "Moneycontrol Top News",
-   "reason": "HTTP 403 for https://www.moneycontrol.com/rss/MCtopnews.xml"
-  },
-  {
-   "feed": "Moneycontrol Business",
-   "reason": "HTTP 403 for https://www.moneycontrol.com/rss/business.xml"
-  },
-  {
-   "feed": "Indian Express Business",
-   "reason": "HTTP 403 for https://indianexpress.com/section/business/feed/"
-  },
-  {
-   "feed": "Financial Express Markets",
-   "reason": "HTTP 403 for https://www.financialexpress.com/market/feed/"
-  },
-  {
-   "feed": "Yahoo Finance",
-   "reason": "HTTP 404 for https://finance.yahoo.com/news/rssindex"
-  },
-  {
-   "feed": "Indian Express Economy",
-   "reason": "HTTP 403 for https://indianexpress.com/section/business/economy/feed/"
-  }
- ]
+ "feed_failures": []
 }
