@@ -115,7 +115,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     hs_on = bool(hs.get("enabled")) and llm is not None
     hs_left = int(hs.get("max_per_run", 150))
     max_cost = float(lim.get("max_cost_usd_per_run", 8.0))
-    readable = pick_for_reading(items, lim, include_headline_only=hs_on)
+    readable = pick_for_reading(items, lim, include_headline_only=True)
     robots = RobotsCache(http_get)
 
     stats = {"read_direct": 0, "read_wayback": 0, "read_summary": 0, "read_archive": 0, "read_search": 0, "read_partial": 0, "cost_stopped": 0, "unreadable": 0, "claims_kept": 0, "claims_dropped": 0,
@@ -145,7 +145,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
         alt = None
         if (not art["text"] or art.get("partial")) and hs_on:
             with lock:
-                go = hs_box["left"] > 0
+                go = hs_box["left"] > 0 and len(search_errors) < 6          # six search errors in a run (e.g. quota): stop trying
                 hs_box["left"] -= 1 if go else 0
             if go:
                 alt = find_alternative(it.title, it.origin_url or it.link, llm, hs.get("tool_type", "web_search_20250305"), robots, http_get,
@@ -195,7 +195,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
             if art["via"] == "headline search":
                 src = Source(art["alt"]["publisher"], art["alt"]["url"], "headline search", None, _archive(it), it.publisher or it.source)
             else:
-                src = Source(it.publisher or it.source, it.link, art["via"], art["snapshot_date"], _archive(it))
+                src = Source(it.publisher or it.source, it.origin_url or it.link, art["via"], art["snapshot_date"], _archive(it))
             st = Story(it.title, section_for(it), it.topics, it.regions, it.category, it.published, [Para(kept, src)], sectors=it.sectors)
             st.score = item_score(it) + min(len(kept), 6) / 2
             stories.append(st)

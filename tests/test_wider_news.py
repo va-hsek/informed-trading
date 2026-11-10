@@ -364,3 +364,39 @@ def test_new_style_google_keys_are_gemini_not_anthropic():
         assert detect_provider(k) == "gemini"
     assert detect_provider("sk-ant-api03-x") == "anthropic"
     assert make_llm(cfg, {"ANTHROPIC_API_KEY": "AQ.Ab8RN6Jabcdef"}, "extract", None).provider == "gemini"
+
+
+# ---------------- Google News link decoding ----------------
+def test_gnews_old_style_id_decodes_offline_and_new_style_uses_batch_call():
+    import base64
+    from news import gnews
+    url = b"https://www.example.com/markets/story-1"
+    raw = b"\x08\x13\x22" + bytes([len(url)]) + url + b"\xd2\x01\x00"
+    gid = base64.urlsafe_b64encode(raw).decode().rstrip("=")
+    assert gnews.decode(f"https://news.google.com/rss/articles/{gid}?oc=5", lambda u: b"") == "https://www.example.com/markets/story-1"
+    assert gnews.article_id("https://example.com/x") is None
+    gnews.GAP = 0
+    page = b'<c-wiz><div data-n-a-sg="SIG" data-n-a-ts="1700000000"></div></c-wiz>'
+    new_id = base64.urlsafe_b64encode(b"\x08\x13\x22\x10AU_yqLabcdefghij").decode().rstrip("=")
+    seen = {}
+    def post(u, body):
+        seen["body"] = body
+        inner = json.dumps(["garturlres", "https://www.reuters.com/markets/real-article/"])
+        return ")]}'\n\n" + json.dumps([["wrb.fr", "Fbv4je", inner, None], ["di", 5], ["af.httprm", 5]])
+    out = gnews.decode(f"https://news.google.com/rss/articles/{new_id}", lambda u: page, post)
+    assert out == "https://www.reuters.com/markets/real-article/" and "SIG" in __import__("urllib.parse").parse.unquote(seen["body"])
+    assert gnews.decode(f"https://news.google.com/rss/articles/{new_id}", lambda u: b"<html>no signature</html>", post) is None      # fails closed
+    bad = lambda u, b: ")]}'\n\n" + json.dumps([["wrb.fr", "Fbv4je", json.dumps(["x", "https://news.google.com/loop"]), None], ["di", 1], ["af", 1]])
+    assert gnews.decode(f"https://news.google.com/rss/articles/{new_id}", lambda u: page, bad) is None                                   # never returns a Google URL
+
+
+def test_headline_only_item_is_read_after_decoding(monkeypatch):
+    from news import articles, gnews
+    from news.feeds import Item
+    monkeypatch.setattr(gnews, "decode", lambda link, g, post=None: "https://pub.example/story")
+    it = Item("g", "news", "Some story", "https://news.google.com/rss/articles/zzz", None, publisher="Pub", headline_only=True)
+    body = "<html><body><article>" + "<p>" + "Sentence about markets and oil prices rising this week. " * 20 + "</p></article></body></html>"
+    class R:
+        def allowed(self, u): return True
+    art = articles.read_article(it, R(), lambda u, *a, **k: body.encode(), lambda *a, **k: {}, 150, 12000)
+    assert art["via"] == "direct" and it.origin_url == "https://pub.example/story" and not it.headline_only

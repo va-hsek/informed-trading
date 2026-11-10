@@ -16,6 +16,7 @@ from typing import Callable, Optional
 
 from bs4 import BeautifulSoup
 
+from news import gnews
 from collectors.http import FetchError
 
 BOT_NAME = "informed-trading"
@@ -127,8 +128,17 @@ def read_article(item, robots: RobotsCache, http_get: Callable, http_json: Calla
     via is 'direct', 'wayback', 'archive', 'archive.today', 'partial', 'feed summary' or None."""
     out = {"text": "", "via": None, "snapshot_date": None, "reason": "", "partial": False}
     if item.headline_only:
-        out["reason"] = "headline only (link is a search redirect, article text not readable)"
-        return out
+        real = None
+        if getattr(robots, "gn_fails", 0) < 8:
+            real = gnews.decode(item.link, http_get)
+            if real is None:
+                robots.gn_fails = getattr(robots, "gn_fails", 0) + 1
+            else:
+                robots.gn_fails = 0
+        if not real:
+            out["reason"] = "headline only (Google News link could not be turned into the publisher's address)"
+            return out
+        item.origin_url, item.headline_only = real, False          # from here on it is an ordinary article
     url = item.origin_url or item.link
     why = ""
     best = ""                                              # longest paywall-free text seen, kept as a last resort
