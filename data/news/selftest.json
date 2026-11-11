@@ -1,40 +1,55 @@
 {
- "at": "2026-11-10T05:49:03.553497+00:00",
+ "at": "2026-11-11T01:00:23.896515+00:00",
  "results": [
   {
    "test": "model key",
+   "ok": true,
+   "detail": "provider=gemini model=gemini-3.5-flash-lite"
+  },
+  {
+   "test": "model: plain call",
+   "ok": true,
+   "detail": "5.7s, reply: '{\"ok\": true}'"
+  },
+  {
+   "test": "model: JSON mode",
+   "ok": true,
+   "detail": "5.4s, reply: '{\\n  \"claims\": []\\n}'"
+  },
+  {
+   "test": "model: web search",
    "ok": false,
-   "detail": "no GEMINI_API_KEY or ANTHROPIC_API_KEY set"
+   "detail": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. "
   },
   {
    "test": "fetch: BBC business feed",
    "ok": true,
-   "detail": "40,628 bytes in 0.2s"
+   "detail": "37,980 bytes in 0.3s"
   },
   {
    "test": "fetch: Economic Times feed",
    "ok": true,
-   "detail": "42,325 bytes in 0.2s"
+   "detail": "49,162 bytes in 0.1s"
   },
   {
    "test": "fetch: Mint feed",
    "ok": true,
-   "detail": "38,706 bytes in 0.2s"
+   "detail": "38,217 bytes in 0.1s"
   },
   {
    "test": "fetch: Moneycontrol feed",
-   "ok": true,
-   "detail": "16,296 bytes in 0.4s"
+   "ok": false,
+   "detail": "HTTP 403 for https://www.moneycontrol.com/rss/business.xml"
   },
   {
    "test": "fetch: RBI press releases",
    "ok": true,
-   "detail": "165,038 bytes in 0.3s"
+   "detail": "165,038 bytes in 1.0s"
   },
   {
    "test": "fetch: Wayback availability API",
    "ok": true,
-   "detail": "193 bytes in 0.5s"
+   "detail": "193 bytes in 0.7s"
   },
   {
    "test": "fetch: Memento aggregator",
@@ -49,7 +64,7 @@
   {
    "test": "fetch: Google News RSS",
    "ok": true,
-   "detail": "198,260 bytes in 0.5s"
+   "detail": "210,528 bytes in 0.7s"
   }
  ]
 }
