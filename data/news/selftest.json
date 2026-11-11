@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T01:00:23.896515+00:00",
+ "at": "2026-11-11T04:31:57.820225+00:00",
  "results": [
   {
    "test": "model key",
@@ -9,12 +9,12 @@
   {
    "test": "model: plain call",
    "ok": true,
-   "detail": "5.7s, reply: '{\"ok\": true}'"
+   "detail": "0.8s, reply: '{\"ok\": true}'"
   },
   {
    "test": "model: JSON mode",
    "ok": true,
-   "detail": "5.4s, reply: '{\\n  \"claims\": []\\n}'"
+   "detail": "1.9s, reply: '{\\n  \"claims\": []\\n}'"
   },
   {
    "test": "model: web search",
@@ -24,32 +24,32 @@
   {
    "test": "fetch: BBC business feed",
    "ok": true,
-   "detail": "37,980 bytes in 0.3s"
+   "detail": "37,980 bytes in 0.2s"
   },
   {
    "test": "fetch: Economic Times feed",
    "ok": true,
-   "detail": "49,162 bytes in 0.1s"
+   "detail": "49,327 bytes in 0.2s"
   },
   {
    "test": "fetch: Mint feed",
    "ok": true,
-   "detail": "38,217 bytes in 0.1s"
+   "detail": "38,378 bytes in 0.2s"
   },
   {
    "test": "fetch: Moneycontrol feed",
-   "ok": false,
-   "detail": "HTTP 403 for https://www.moneycontrol.com/rss/business.xml"
+   "ok": true,
+   "detail": "16,296 bytes in 0.5s"
   },
   {
    "test": "fetch: RBI press releases",
    "ok": true,
-   "detail": "165,038 bytes in 1.0s"
+   "detail": "196,703 bytes in 2.4s"
   },
   {
    "test": "fetch: Wayback availability API",
    "ok": true,
-   "detail": "193 bytes in 0.7s"
+   "detail": "193 bytes in 0.4s"
   },
   {
    "test": "fetch: Memento aggregator",
@@ -64,7 +64,7 @@
   {
    "test": "fetch: Google News RSS",
    "ok": true,
-   "detail": "210,528 bytes in 0.7s"
+   "detail": "195,140 bytes in 0.4s"
   }
  ]
 }
