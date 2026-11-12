@@ -500,3 +500,60 @@ def test_email_goes_to_many_recipients_as_bcc_with_the_pdf(tmp_path):
     assert sent["to_header"] == "me@gmail.com" and sent["attach"] == ["e.pdf"] and sent["host"] == "smtp.gmail.com"
     log = deliver(sec, pdf, 0, "12 Nov 2026", smtp_factory=SMTP)
     assert any("notice sent" in x for x in log) and sent["attach"] == []
+
+
+# ---------------- newsletter written as lines, and free Google News search ----------------
+LINES_HTML = ("<html><body><table><tr><td>Read online | Together with Acme Corp sponsor message goes here for sure yes</td></tr>"
+              "<tr><td><p>US stocks bounced back yesterday as the AI trade came back to life across the major indexes <a href='https://link.mail.beehiiv.com/x/1'>WSJ</a></p></td></tr>"
+              "<tr><td><p>Europe's Stoxx 600 hit a new all-time high for the first time since August on bank earnings</p></td></tr>"
+              "<tr><td><p>Short</p></td></tr></table></body></html>")
+
+
+def test_parse_lines_keeps_news_lines_and_drops_boilerplate():
+    from news.newsletter import parse_lines
+    got = parse_lines(LINES_HTML)
+    assert [g["title"][:12] for g in got] == ["US stocks bo", "Europe's Sto"] and got[0]["url"].startswith("https://link.mail.beehiiv.com")
+
+
+def test_line_style_newsletter_items_are_headline_only_and_never_carry_tracking_links():
+    from email.message import EmailMessage
+    from news.newsletter import fetch_newsletters
+    m = EmailMessage()
+    m["From"], m["Subject"], m["Date"] = "Exec Sum <news@execsum.co>", "Today", "Thu, 12 Nov 2026 02:00:00 +0000"
+    m.set_content("x"); m.add_alternative(LINES_HTML, subtype="html")
+    class IMAP:
+        def __init__(self, h): pass
+        def login(self, u, p): pass
+        def select(self, b, readonly=False): pass
+        def search(self, *a): return "OK", [b"1"]
+        def fetch(self, mid, w): return "OK", [(b"1", m.as_bytes())]
+        def logout(self): pass
+    now = datetime(2026, 11, 12, 6, 0, tzinfo=timezone.utc)
+    calls = []
+    items, cov = fetch_newsletters([{"name": "Exec Sum", "from": "news@execsum.co", "style": "lines", "site": "https://execsum.co/"}],
+                                   {"GMAIL_USER": "a@b.c", "GMAIL_APP_PASSWORD": "p"}, now, now - timedelta(hours=24), IMAP, lambda u: calls.append(u))
+    assert len(items) == 2 and all(i.headline_only and i.extra and i.link.startswith("https://execsum.co/#nl-") for i in items) and calls == []
+    assert len(items[0].summary) > 60 and "beehiiv" not in " ".join(i.link for i in items)
+
+
+def test_gnews_search_finds_same_story_at_another_outlet_and_rejects_mismatches():
+    from news.gnews_search import find_alternative_gnews
+    rss = (b"<?xml version='1.0'?><rss><channel>"
+           b"<item><title>Wall Street stocks rebound as AI trade revives - Reuters</title><link>https://news.google.com/rss/articles/CBMiOLD</link><pubDate>Thu, 12 Nov 2026 03:00:00 GMT</pubDate><source url='https://reuters.com'>Reuters</source></item>"
+           b"<item><title>Totally unrelated gardening tips</title><link>https://news.google.com/rss/articles/CBMiX</link><pubDate>Thu, 12 Nov 2026 03:00:00 GMT</pubDate><source url='https://g.com'>Garden</source></item></channel></rss>")
+    import base64
+    u = b"https://www.reuters.com/markets/rebound"
+    gid = base64.urlsafe_b64encode(b"\x08\x13\x22" + bytes([len(u)]) + u + b"\xd2\x01\x00").decode().rstrip("=")
+    rss = rss.replace(b"CBMiOLD", gid.encode())
+    page = ("<html><head><title>Wall Street stocks rebound as AI trade revives</title></head><body><article>" + "<p>US stocks rebounded as the AI trade revived across major indexes on Wednesday. " * 12 + "</p></article></body></html>").encode()
+    def get(url, *a, **k):
+        if "news.google.com/rss/search" in url: return rss
+        if "reuters.com" in url: return page
+        raise AssertionError(url)
+    class R:
+        def allowed(self, u): return True
+    from news import gnews
+    gnews.GAP = 0
+    alt = find_alternative_gnews("Wall Street stocks rebound yesterday as the AI trade revives", "https://execsum.co/#nl-1", R(), get, 150, 12000)
+    assert alt and alt["url"] == "https://www.reuters.com/markets/rebound" and alt["publisher"] == "Reuters"
+    assert find_alternative_gnews("Completely different volcano eruption in Iceland today", "x", R(), get) is None

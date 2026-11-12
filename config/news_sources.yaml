@@ -150,6 +150,8 @@ limits:
   max_cost_usd_per_run: 8.0        # hard stop: reading ends and the rest are listed as headlines if the running estimate passes this
   headline_search:                 # last resort for unreadable/blocked/headline-only items: find the same story on a readable page
     enabled: true
+    free_search: true                # Google News RSS search for the same story at another outlet (no quota); tried first
+    free_search_max_per_run: 600
     max_per_run: 150
     model: claude-haiku-5-5
     tool_type: web_search_20250305  # check Anthropic's docs for the current version string if rejected
@@ -220,8 +222,9 @@ calendar_refresh:
   price_output_per_mtok: 10.0
 
 # Newsletters delivered to your Gmail inbox: ADDITIONAL to the feeds above. Needs GMAIL_USER and GMAIL_APP_PASSWORD (secrets).
+#   style: links (headline links) or lines (news written as short lines of text, e.g. beehiiv newsletters); site: public home page used as the link when a line has no readable link.
 #   name: shown as the source; from: part of the sender address (e.g. "news@example.com" or "@example.com");
 #   subject_contains: optional filter; category: india|world|tech|...; region: india|americas|europe|apac|middleeast or empty.
 newsletters:
-  - {name: "Exec Sum", from: "news@execsum.co", category: world, region: ""}
+  - {name: "Exec Sum", from: "news@execsum.co", category: world, region: "", style: lines, site: "https://execsum.co/"}
 #  - {name: "Example Daily", from: "@example.com", category: world, region: ""}

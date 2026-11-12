@@ -27,6 +27,7 @@ from news.articles import RobotsCache, read_article
 from news.claims import extract_claims
 from news.feeds import collect_items, edition_window, norm_title, tag_topics
 from news.headline_search import find_alternative
+from news.gnews_search import find_alternative_gnews
 from news.newsletter import fetch_newsletters
 from news.llm import LLM, make_llm
 from news.magazine import render_magazine
@@ -137,6 +138,8 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     from concurrent.futures import ThreadPoolExecutor
     lock = threading.Lock()
     hs_box = {"left": hs_left}
+    fs_box = {"left": int(hs.get("free_search_max_per_run", 600)), "fails": 0}
+    free_errors: list[str] = []
     via_stat = {"direct": "read_direct", "wayback": "read_wayback", "archive": "read_archive", "archive.today": "read_archive",
                 "headline search": "read_search", "partial": "read_partial", "feed summary": "read_summary"}
 
@@ -150,7 +153,15 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
             return "error", f"stopped early: the first {brk['errs']} model calls all failed (last: {brk['last']})"
         art = read_article(it, robots, http_get, http_json, lim["min_article_chars"], lim["max_article_chars"])
         alt = None
-        if (not art["text"] or art.get("partial")) and hs_on:
+        if (not art["text"] or art.get("partial")) and hs.get("free_search", True):
+            with lock:
+                go_free = fs_box["left"] > 0 and fs_box["fails"] < 25
+                fs_box["left"] -= 1 if go_free else 0
+            if go_free:
+                alt = find_alternative_gnews(it.title, it.origin_url or it.link, robots, http_get, lim["min_article_chars"], lim["max_article_chars"], errors=free_errors)
+                with lock:
+                    fs_box["fails"] = 0 if alt else fs_box["fails"] + (1 if free_errors else 0)
+        if alt is None and (not art["text"] or art.get("partial")) and hs_on:
             with lock:
                 go = hs_box["left"] > 0 and len(search_errors) < 6          # six search errors in a run (e.g. quota): stop trying
                 hs_box["left"] -= 1 if go else 0
@@ -159,6 +170,8 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
                                        lim["min_article_chars"], lim["max_article_chars"], errors=search_errors)
         if alt:
             art = {"text": alt["text"], "via": "headline search", "snapshot_date": None, "reason": "", "alt": alt}
+        if not art["text"] and it.extra and len(it.summary) >= 60:          # newsletter line nobody else carried: use the newsletter's own words
+            art = {"text": it.summary, "via": "feed summary", "snapshot_date": None, "reason": "", "partial": False}
         if not art["text"]:
             return "unreadable", art["reason"]
         kept, dropped, err = extract_claims(llm, it.title, art["text"], lim["max_claims_per_article"])
@@ -298,7 +311,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     meta["diagnostics"] = {"generated": now.isoformat(), "provider": getattr(llm, "provider", None), "model": getattr(llm, "model", None),
                            "llm_preflight_error": llm_error, "stats": stats,
                            "top_failure_reasons": reasons.most_common(15), "unreadable_samples": samples,
-                           "headline_search_errors": [_reason_key(x) for x in search_errors[:10]],
+                           "headline_search_errors": [_reason_key(x) for x in search_errors[:10]], "free_search_errors": [_reason_key(x) for x in free_errors[:10]],
                            "feed_failures": [{"feed": c["feed"], "reason": c["reason"][:160]} for c in coverage if not c["ok"]]}
     meta["mag"] = {"now": now, "stories": stories, "unread": hl, "stats": stats, "coverage": coverage, "reasons": reasons.most_common(12),
                    "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg,

@@ -129,7 +129,9 @@ def read_article(item, robots: RobotsCache, http_get: Callable, http_json: Calla
     out = {"text": "", "via": None, "snapshot_date": None, "reason": "", "partial": False}
     if item.headline_only:
         real = None
-        if getattr(robots, "gn_fails", 0) < 8:
+        if gnews.article_id(item.link) is None:
+            pass                                               # not a Google News link (e.g. a newsletter line): nothing to decode, and it must not trip the breaker
+        elif getattr(robots, "gn_fails", 0) < 8:
             real = gnews.decode(item.link, http_get)
             if real is None:
                 robots.gn_fails = getattr(robots, "gn_fails", 0) + 1

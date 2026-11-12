@@ -9,6 +9,7 @@ Needs GMAIL_USER and GMAIL_APP_PASSWORD (a Google app password, not your normal 
 from __future__ import annotations
 
 import email
+import hashlib
 import email.policy
 import imaplib
 import re
@@ -63,6 +64,38 @@ def parse_newsletter(html: str, max_links: int = 60) -> list[dict]:
             blurb = _clean(blurb.replace(text, "", 1))
         out.append({"title": text, "url": href, "blurb": blurb[:600]})
         if len(out) >= max_links:
+            break
+    return out
+
+
+BOILER = ("read online", "together with", "powered by", "learn more", "subscribe", "sponsored", "advertis", "unsubscribe", "view in browser", "refer a friend",
+          "forward this", "share this", "follow us", "click here", "sign up", "promo", "partner", "©", "all rights reserved", "mailing address", "privacy policy",
+          "what we're watching", "full calendar", "let's dive in", "good morning", "presented by", "brought to you")
+TRACK_HOSTS = ("beehiiv.com", "list-manage.com", "mailchi.mp", "substack.com/redirect", "sendgrid.net", "mandrillapp.com", "click.", "links.")
+
+
+def parse_lines(html: str, max_lines: int = 70) -> list[dict]:
+    """News written as short lines (one fact or headline per bullet or paragraph), as in beehiiv-style newsletters. Each leaf block of 8+ words becomes a line;
+    the first link inside it (usually an outlet tag such as WSJ or FT) is kept in case it can be followed."""
+    soup = BeautifulSoup(html, "html.parser")
+    for t in soup(["script", "style"]):
+        t.decompose()
+    blocks, out, seen = ["p", "li", "td", "div", "h1", "h2", "h3"], [], set()
+    for el in soup.find_all(blocks):
+        if el.find(blocks):
+            continue
+        text = _clean(el.get_text(" ")).replace("\u200c", "").replace("\u200b", "").strip()
+        text = re.sub(r"\s+", " ", text)
+        if not (45 <= len(text) <= 700) or len(text.split()) < 8 or any(w in text.lower() for w in BOILER):
+            continue
+        k = norm_title(text[:120])
+        if k in seen:
+            continue
+        seen.add(k)
+        first = re.split(r"(?<=[.!?])\s+", text)[0]
+        link = next((a["href"] for a in el.find_all("a", href=True) if a["href"].startswith("http")), "")
+        out.append({"title": first[:200], "url": link, "blurb": text})
+        if len(out) >= max_lines:
             break
     return out
 
@@ -128,18 +161,31 @@ def fetch_newsletters(specs: list[dict], secrets: dict, now: datetime, window_st
                         continue
                     if s.get("subject_contains") and s["subject_contains"].lower() not in str(msg["Subject"]).lower():
                         continue
-                    for link in parse_newsletter(_html_of(msg)):
+                    parser = parse_lines if s.get("style") == "lines" else parse_newsletter
+                    for link in parser(_html_of(msg)):
                         cand.append((link, sent, str(msg["Subject"])))
+                def _res(c):
+                    u = c[0]["url"]
+                    if not u or any(t in urllib.parse.urlparse(u).netloc for t in TRACK_HOSTS):
+                        return None                                     # trackers refuse automated clients; do not even try
+                    return resolver(u)
                 with ThreadPoolExecutor(max_workers=8) as ex:
-                    real = list(ex.map(lambda c: resolver(c[0]["url"]), cand))
+                    real = list(ex.map(_res, cand))
                 kept = unresolved = 0
+                lines_style = s.get("style") == "lines"
+                site = s.get("site") or "https://" + s["from"].split("@")[-1] + "/"
                 for (link, sent, _subj), url in zip(cand, real):
-                    if not url:
+                    if not url and not lines_style:
                         unresolved += 1                                     # never publish a tracking link
                         continue
-                    url = clean_url(url)
-                    it = Item(label, s.get("category", "world"), link["title"], url, sent, link["blurb"], bool(s.get("paywalled")))
-                    it.origin_url, it.publisher, it.feed_region, it.extra = url, s["name"], s.get("region", ""), True
+                    if url:
+                        url = clean_url(url)
+                        it = Item(label, s.get("category", "world"), link["title"], url, sent, link["blurb"], bool(s.get("paywalled")))
+                        it.origin_url = url
+                    else:                                                   # a line with no followable link: only a headline; it is searched for elsewhere
+                        it = Item(label, s.get("category", "world"), link["title"], f"{site.rstrip('/')}/#nl-{hashlib.md5(norm_title(link['title']).encode()).hexdigest()[:8]}", sent, link["blurb"])
+                        it.headline_only = True
+                    it.publisher, it.feed_region, it.extra = s["name"], s.get("region", ""), True
                     items.append(it)
                     kept += 1
                 coverage.append({"feed": label, "ok": True, "kept": kept,
