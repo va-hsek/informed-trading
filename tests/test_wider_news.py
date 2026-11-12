@@ -557,3 +557,69 @@ def test_gnews_search_finds_same_story_at_another_outlet_and_rejects_mismatches(
     alt = find_alternative_gnews("Wall Street stocks rebound yesterday as the AI trade revives", "https://execsum.co/#nl-1", R(), get, 150, 12000)
     assert alt and alt["url"] == "https://www.reuters.com/markets/rebound" and alt["publisher"] == "Reuters"
     assert find_alternative_gnews("Completely different volcano eruption in Iceland today", "x", R(), get) is None
+
+
+# ---------------- Today in X, section summaries, depth styling, HTML attachment ----------------
+def _mini_story(h, outlets, section="India", score=5, topics=None):
+    from news.paper import Source, Para, Story
+    ist = timezone(timedelta(hours=5, minutes=30))
+    return Story(h, section, topics or [], ["india"], "news", datetime(2026, 11, 12, 3, 0, tzinfo=ist),
+                 [Para([f"{h}, 4.2 percent."], Source(o, f"https://{o.lower()}.example/{abs(hash(h)) % 999}", "direct")) for o in outlets], score=score, sectors=[])
+
+
+def _render(stories, cal=None):
+    import yaml
+    from news.magazine import render_magazine
+    cfg = yaml.safe_load(open(ROOT_CFG))
+    stats = dict(read_direct=1, read_wayback=0, read_archive=0, read_search=0, read_partial=0, read_summary=0, unreadable=0, cost_stopped=0, extract_errors=0, claims_kept=1, claims_dropped=0)
+    now = datetime(2026, 11, 12, 6, 0, tzinfo=timezone(timedelta(hours=5, minutes=30)))
+    return render_magazine(now, stories, [], stats, [], [], "", "", None, "", cal or {"last_reviewed": "2026-11-12", "events": []}, cfg, lambda it: "")
+
+
+ROOT_CFG = str(Path(__file__).resolve().parent.parent / "config" / "news_sources.yaml")
+
+
+def test_today_in_x_counts_only_stories_that_earned_it():
+    from news.magazine import lead_clusters
+    from news.cluster import cluster
+    bigh = ["Fed holds rates steady amid sticky inflation", "Typhoon batters Philippines coast", "Nvidia earnings beat estimates", "Brent crude slides on demand worries"]
+    smallh = ["Village fair opens", "Local bakery wins award", "Museum extends hours", "Cricket club elects captain", "Library adds ebooks", "Marathon route announced"]
+    big = [_mini_story(h, ["Mint", "Reuters", "BBC"], score=10 - i * 0.1) for i, h in enumerate(bigh)]
+    small = [_mini_story(h, ["Mint"], score=1) for h in smallh]
+    got = lead_clusters(cluster(big + small), {"top_min_outlets": 3, "top_floor": 3, "top_max": 15})
+    assert len(got) == 4                                   # four stories carried by 3 outlets, no padding to five
+    got = lead_clusters(cluster(small), {"top_min_outlets": 3, "top_floor": 3, "top_max": 15})
+    assert len(got) == 3                                   # quiet day: the floor still shows the three strongest
+    html = _render(big + small)
+    assert "Today in 4" in html and "Today in five" not in html
+
+
+def test_sections_with_several_parts_say_what_is_inside_and_depth_is_styled():
+    stories = [_mini_story("Crude falls on talks of supply deal in gulf region", ["Mint"], "Energy and metals", topics=["crude"]),
+               _mini_story("Gold slips as yields rise on strong jobs data print", ["Kitco"], "Energy and metals", topics=["gold"]),
+               _mini_story("RBI keeps repo rate unchanged for fifth straight meeting", ["Mint"], "India"),
+               _mini_story("Sensex ends higher led by banks and IT shares today", ["BS"], "India")]
+    cal = {"last_reviewed": "2026-11-12", "events": [{"date": "2026-11-12", "time_ist": "10:00", "title": "Quarterly review meeting", "expectation": "x"},
+                                                      {"date": "2026-11-13", "time_ist": "10:00", "title": "US CPI", "expectation": "y"}]}
+    html = _render(stories, cal)
+    import re
+    sums = re.findall(r'<span class=sum>([^<]*)</span>', html)
+    assert any(x.startswith("Today 1 · Tomorrow 1") for x in sums)                     # events: what days it holds
+    assert any("Crude oil 1" in x and "Gold 1" in x for x in sums)                      # energy and metals: what it holds
+    assert any(x.startswith("Includes: ") and "RBI keeps repo rate" in x for x in sums)  # a part with several storylines lists its leading headlines
+    assert "details.sub{margin:.35rem 0 .35rem .6rem" in html and "details.st[open]{background:color-mix" in html
+
+
+def test_email_carries_pdf_and_html(tmp_path):
+    from news.deliver import deliver
+    pdf, htm = tmp_path / "news_x.pdf", tmp_path / "news_x.html"
+    pdf.write_bytes(b"%PDF-1.4 x"); htm.write_text("<html>page</html>")
+    sent = {}
+    class SMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+        def login(self, u, p): pass
+        def send_message(self, msg, from_addr, to_addrs): sent["names"] = sorted(p.get_filename() for p in msg.iter_attachments()); sent["to"] = to_addrs
+    log = deliver({"GMAIL_USER": "a@b.c", "GMAIL_APP_PASSWORD": "p", "EMAIL_TO": "x@y.z; q@r.s"}, pdf, 3, "12 Nov 2026", smtp_factory=SMTP)
+    assert sent["names"] == ["news_x.html", "news_x.pdf"] and sent["to"] == ["x@y.z", "q@r.s"] and "PDF + HTML" in log[0]

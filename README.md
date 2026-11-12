@@ -56,7 +56,7 @@ All reports are HTML only (`reports/*.html`). Each run reads whatever sources ar
 - Every claim must appear verbatim in the article text, with its numbers; otherwise it is dropped.
 
 ### Page layout and diagnostics
-The edition is a magazine page (`news/magazine.py`): lead story, "Today in five", market tiles, an Energy and metals desk, storylines grouped by jurisdiction or by sector
+The edition is a magazine page (`news/magazine.py`): lead story, "Today in X", market tiles, an Energy and metals desk, storylines grouped by jurisdiction or by sector
 (switch at the top), a week-ahead timeline, collapsed headlines and a collapsed Coverage and quality panel.
 Each run also writes `data/news/diagnostics.json` (model errors, top failure reasons, sample unreadable articles, failed feeds) and the pre-flight
 `data/news/selftest.json`; both are committed, so a failed run can be diagnosed from the repo.
@@ -81,7 +81,7 @@ India 10-year yield: Alice Blue has no bond yield, so it comes from the ABSL AMC
 Suggested schedule: GitHub Actions `.github/workflows/morning-edition.yml` (05:30 IST) and `calendar-refresh.yml` (weekly).
 
 ### Page structure
-Every unit is a one-line headline that opens: sections, subsections, storylines and stories. Order: Today in five, Upcoming events, Event updates (official
+Every unit is a one-line headline that opens: sections, subsections, storylines and stories. Order: Today in X (as many stories as qualify: carried by 3+ outlets, never fewer than 3 or more than 15), Upcoming events, Event updates (official
 releases and stories matching a recent calendar event), Energy and metals, News by jurisdiction, News by sector, What we missed, Coverage.
 
 ### Phone PDF and delivery
@@ -93,3 +93,13 @@ Nothing is sent when no stories were built.
 ### Newsletters
 Add your newsletter under `newsletters:` in `config/news_sources.yaml` and set secrets `GMAIL_USER` and `GMAIL_APP_PASSWORD` (a Google app password). Its linked
 headlines are read as extra items on top of the normal quotas (`limits.newsletter_reads`).
+
+
+## Cost per run and the daily schedule
+The Morning Edition runs every day at 05:30 IST (GitHub cron `0 0 * * *`; GitHub can start it up to ~15 minutes late).
+Cost is almost all the model reading articles. With gemini-3.5-flash-lite (about $0.30 per million input tokens, $2.50 per million output) a normal run of roughly 450-780 readable articles
+is estimated at **$0.8-1.8, about Rs 70-160** (at `llm.usd_inr`), so about Rs 2,000-5,000 a month. This is an estimate: each run now writes its real token use and cost
+(in dollars and rupees) to `data/news/diagnostics.json` (`llm_use`) and to the Coverage panel; compare after the first healthy run. `limits.max_cost_usd_per_run` (2.5, about Rs 225) stops reading if a run goes over.
+
+## What arrives in your email
+Both the PDF (for the phone) and the HTML page (open it in a browser to expand and fold). Put several addresses in `EMAIL_TO`, separated by commas; they are sent as Bcc.

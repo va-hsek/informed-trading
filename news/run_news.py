@@ -295,7 +295,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
              f"{stats['unreadable']} could not be read, {stats['cost_stopped']} left unread by the spending stop; {stats['extract_errors']} extraction errors.")
     L.append(f"- Claims kept {stats['claims_kept']}, dropped by the guard {stats['claims_dropped']}.")
     if llm is not None:
-        L.append(f"- Model use this run: {llm.tokens_in:,} input and {llm.tokens_out:,} output tokens (estimated ${llm.est_cost_usd():.3f} at the prices in config/news_sources.yaml).")
+        L.append(f"- Model use this run: {llm.tokens_in:,} input and {llm.tokens_out:,} output tokens (estimated ${llm.est_cost_usd():.3f}, about ₹{llm.est_cost_usd() * float((cfg.get('llm') or {}).get('usd_inr', 0) or 0):,.0f}, at the prices in config/news_sources.yaml).")
     if drops:
         L.append("- Dropped claims (reason): " + "; ".join(drops[:5]) + (" ..." if len(drops) > 5 else ""))
 
@@ -312,7 +312,10 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
                            "llm_preflight_error": llm_error, "stats": stats,
                            "top_failure_reasons": reasons.most_common(15), "unreadable_samples": samples,
                            "headline_search_errors": [_reason_key(x) for x in search_errors[:10]], "free_search_errors": [_reason_key(x) for x in free_errors[:10]],
-                           "feed_failures": [{"feed": c["feed"], "reason": c["reason"][:160]} for c in coverage if not c["ok"]]}
+                           "feed_failures": [{"feed": c["feed"], "reason": c["reason"][:160]} for c in coverage if not c["ok"]],
+                           "llm_use": ({"tokens_in": llm.tokens_in, "tokens_out": llm.tokens_out, "searches": getattr(llm, "search_count", 0),
+                                        "est_cost_usd": round(llm.est_cost_usd(), 4),
+                                        "est_cost_inr": round(llm.est_cost_usd() * float((cfg.get("llm") or {}).get("usd_inr", 0) or 0), 1)} if llm is not None else None)}
     meta["mag"] = {"now": now, "stories": stories, "unread": hl, "stats": stats, "coverage": coverage, "reasons": reasons.most_common(12),
                    "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg,
                    "archive": _archive}

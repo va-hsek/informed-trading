@@ -147,7 +147,10 @@ limits:
   read_caps: {"india": 270, "americas": 270, "europe": 210, "apac": 60, "middleeast": 60, "other": 120}
   trending_bonus_per_extra_source: 1.5
   parallel_workers: 8              # articles are read in parallel so a run takes minutes, not an hour
-  max_cost_usd_per_run: 8.0        # hard stop: reading ends and the rest are listed as headlines if the running estimate passes this
+  max_cost_usd_per_run: 2.5        # hard stop (about Rs 225): reading ends and the rest are listed as headlines if the running estimate passes this
+  top_min_outlets: 3               # 'Today in X': a storyline qualifies when this many outlets carry it
+  top_floor: 3                     # ...but there are always at least this many
+  top_max: 15                      # ...and never more than this
   headline_search:                 # last resort for unreadable/blocked/headline-only items: find the same story on a readable page
     enabled: true
     free_search: true                # Google News RSS search for the same story at another outlet (no quota); tried first
@@ -163,6 +166,7 @@ llm:
   price_input_per_mtok: 0.10       # Claude Haiku 5.5, prompts up to 100k tokens (platform.claude.com pricing page, checked 9 Nov 2026)
   price_output_per_mtok: 0.50
   # Used instead when the key is a Google (Gemini) key. Prices: ai.google.dev model pages, checked 10 Nov 2026; edit if they change.
+  usd_inr: 90                      # rupees per US dollar, only used to show the cost in rupees; edit when the rate moves a lot
   requests_per_minute: 30          # all workers together; the pacer waits instead of letting the API answer 429
   gemini:
     extract_model: gemini-3.5-flash-lite      # stable; default thinking level is minimal

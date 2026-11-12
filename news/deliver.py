@@ -58,7 +58,7 @@ def send_telegram(secrets: dict, pdf: Optional[Path], caption: str, opener: Call
     return "Telegram: PDF sent"
 
 
-def send_email(secrets: dict, pdf: Optional[Path], subject: str, text: str, smtp_factory: Callable = smtplib.SMTP_SSL) -> str:
+def send_email(secrets: dict, pdf: Optional[Path], subject: str, text: str, smtp_factory: Callable = smtplib.SMTP_SSL, html: Optional[Path] = None) -> str:
     user, pw = secrets["GMAIL_USER"], secrets["GMAIL_APP_PASSWORD"]
     rcpt = [a.strip() for a in secrets["EMAIL_TO"].replace(";", ",").split(",") if "@" in a]
     if not rcpt:
@@ -68,10 +68,13 @@ def send_email(secrets: dict, pdf: Optional[Path], subject: str, text: str, smtp
     msg.set_content(text)
     if pdf is not None:
         msg.add_attachment(pdf.read_bytes(), maintype="application", subtype="pdf", filename=pdf.name)
+    if html is not None:
+        msg.add_attachment(html.read_bytes(), maintype="text", subtype="html", filename=html.name)    # the full page: expands and folds, opens in any browser
     with smtp_factory("smtp.gmail.com", 465, timeout=60) as smtp:
         smtp.login(user, pw)
         smtp.send_message(msg, from_addr=user, to_addrs=rcpt)
-    return f"Email: {'PDF' if pdf is not None else 'notice'} sent to {len(rcpt)} recipient(s)"
+    what = "notice" if pdf is None else "PDF + HTML" if html is not None else "PDF"
+    return f"Email: {what} sent to {len(rcpt)} recipient(s)"
 
 
 def send_whatsapp(secrets: dict, pdf: Path, caption: str, date_text: str, opener: Callable = urllib.request.urlopen) -> str:
@@ -115,9 +118,12 @@ def deliver(secrets: dict, pdf: Path, stories: int, date_text: str, opener: Call
         return log + ["Edition has no stories: PDF not sent."]
     caption = f"The Morning Edition, {date_text}"
     top = "\n".join(f"- {h}" for h in (headlines or [])[:5])
-    body = f"Your Morning Edition for {date_text} is attached ({stories} stories).\n\nIn this edition:\n{top}\n\nOpen the PDF to read the full stories. Information only, not advice." if top else \
-        f"Your Morning Edition for {date_text} is attached ({stories} stories). Information only, not advice."
-    for name, ok, fn in (("Email", has_mail, lambda: send_email(secrets, pdf, f"The Morning Edition, {date_text}", body, smtp_factory)),
+    html = pdf.with_suffix(".html")
+    html = html if html.exists() else None
+    files = "the PDF (for reading on a phone) and the HTML page (open it in a browser to expand and fold sections)" if html else "the PDF"
+    body = f"Your Morning Edition for {date_text} is attached ({stories} stories): {files}.\n\nIn this edition:\n{top}\n\nInformation only, not advice." if top else \
+        f"Your Morning Edition for {date_text} is attached ({stories} stories): {files}. Information only, not advice."
+    for name, ok, fn in (("Email", has_mail, lambda: send_email(secrets, pdf, f"The Morning Edition, {date_text}", body, smtp_factory, html)),
                          ("Telegram", has_tg, lambda: send_telegram(secrets, pdf, caption, opener)),
                          ("WhatsApp", has_wa, lambda: send_whatsapp(secrets, pdf, caption, date_text, opener))):
         if ok:

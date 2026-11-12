@@ -1,5 +1,5 @@
 """The Morning Edition as a phone-first magazine page. Everything starts as a one-line headline you can open or fold: sections, subsections,
-storylines and single stories. Order: today in five, upcoming events, event updates, energy and metals, news by jurisdiction, news by sector,
+storylines and single stories. Order: today in X (as many as deserve the top), upcoming events, event updates, energy and metals, news by jurisdiction, news by sector,
 then what was missed and the coverage panel. One self-contained HTML file (a few lines of script open and fold sections). Pure rendering: it never fetches anything and never adds text of its own
 to a story, so every sentence on the page is a verified claim followed by its source link."""
 from __future__ import annotations
@@ -122,23 +122,44 @@ def cluster_details(c: Cluster, uid: str = "", show_region: bool = True) -> str:
     return story_details(c.lead, uid, show_region, related=c.related or None)
 
 
-def fold(kind: str, fid: str, title: str, inner: str, count: str = "", accent: str = "", kicker: str = "", open_: bool = False) -> str:
-    """kind: 'block' (main section) or 'sub' (subsection). Closed it is one line."""
+def fold(kind: str, fid: str, title: str, inner: str, count: str = "", accent: str = "", kicker: str = "", open_: bool = False, summary: str = "") -> str:
+    """kind: 'block' (main section) or 'sub' (subsection). Closed it is a headline plus, when it holds several parts, one small line saying what is inside."""
     style = f' style="--accent:{accent}"' if accent else ""
     return (f'<details class="{kind}" id="{fid}"{style}{" open" if open_ else ""}><summary>'
             f'{f"<span class=kick>{esc(kicker)}</span>" if kicker else ""}<span class="ft">{esc(title)}</span>'
-            f'{f"<span class=count>{esc(count)}</span>" if count else ""}</summary><div class="inner">{inner}</div></details>')
+            f'{f"<span class=count>{esc(count)}</span>" if count else ""}{f"<span class=sum>{esc(summary)}</span>" if summary else ""}</summary><div class="inner">{inner}</div></details>')
 
 
 def _n(clusters: list[Cluster]) -> int:
     return sum(len(c.stories) for c in clusters)
 
 
+def _short(t: str, n: int = 58) -> str:
+    t = re.sub(r"\s+", " ", t).strip()
+    return t if len(t) <= n else t[: n - 1].rsplit(" ", 1)[0].rstrip(",;:-") + "…"
+
+
+def names_summary(pairs: list[tuple[str, int]], limit: int = 7) -> str:
+    """'Crude oil 7 · Gold 4 · ...' for a section made of named parts."""
+    if len(pairs) < 2:
+        return ""
+    shown = [f"{n} {c}" for n, c in pairs[:limit]]
+    return " · ".join(shown) + (f" · +{len(pairs) - limit} more" if len(pairs) > limit else "")
+
+
+def leads_summary(clusters: list, limit: int = 3) -> str:
+    """For a part made of several storylines: its leading headlines, shortened."""
+    if len(clusters) < 2:
+        return ""
+    heads = [_short(c.lead.headline) for c in clusters[:limit]]
+    return "Includes: " + " · ".join(heads) + (f" · +{len(clusters) - limit} more" if len(clusters) > limit else "")
+
+
 def groups_html(prefix: str, groups: list[tuple[str, list[Cluster]]], hue_by_index: bool = False) -> str:
     out = []
     for i, (name, cl) in enumerate(groups):
         inner = "".join(cluster_details(c, f"{prefix}-{_slug(name)}-{j}", show_region=(prefix != "r")) for j, c in enumerate(cl))
-        out.append(fold("sub", f"{prefix}-{_slug(name)}", name, inner, f"{_n(cl)}", _accent_for(name, i if hue_by_index else 0)))
+        out.append(fold("sub", f"{prefix}-{_slug(name)}", name, inner, f"{_n(cl)}", _accent_for(name, i if hue_by_index else 0), summary=leads_summary(cl)))
     return "".join(out)
 
 
@@ -171,7 +192,7 @@ def markets_html(rows: list[dict], note: str) -> str:
 
 
 
-def event_rows(cal: dict, now: datetime, horizon_days: int, max_age_days: int) -> tuple[str, int]:
+def event_rows(cal: dict, now: datetime, horizon_days: int, max_age_days: int) -> tuple[str, int, str]:
     today = now.astimezone(IST).date()
     warn = ""
     try:
@@ -189,8 +210,8 @@ def event_rows(cal: dict, now: datetime, horizon_days: int, max_age_days: int) -
         if today <= d <= today + timedelta(days=horizon_days):
             days.setdefault(d, []).append(e)
     if not days:
-        return '<p class="intro">No events in the calendar for this period.</p>', 0
-    out, total = [], 0
+        return '<p class="intro">No events in the calendar for this period.</p>', 0, ""
+    out, total, per_day = [], 0, []
     for d in sorted(days):
         rows = []
         for e in sorted(days[d], key=lambda x: str(x.get("time_ist", ""))):
@@ -203,8 +224,11 @@ def event_rows(cal: dict, now: datetime, horizon_days: int, max_age_days: int) -
                         f'<span class="meta">{aff}{unv}</span></summary><div class="body"><p>{esc(str(e.get("expectation") or "No expectation recorded."))}'
                         f'{f" <span class=cite>{src}</span>" if src else ""}</p></div></details>')
         tag = "Today" if d == today else "Tomorrow" if d == today + timedelta(days=1) else d.strftime("%A")
-        out.append(fold("sub", f"ev-{d:%m%d}", f"{tag} · {d:%d %b}", "".join(rows), str(len(rows)), "#495057", open_=(d == today)))
-    return (f'<p class="warnline">{esc(warn)}</p>' if warn else "") + "".join(out), total
+        per_day.append((tag, len(rows)))
+        titles = " · ".join(_short(e["title"], 34) for e in sorted(days[d], key=lambda x: str(x.get("time_ist", "")))[:3])
+        out.append(fold("sub", f"ev-{d:%m%d}", f"{tag} · {d:%d %b}", "".join(rows), str(len(rows)), "#495057", open_=(d == today),
+                        summary=(f"Includes: {titles}" + (f" · +{len(rows) - 3} more" if len(rows) > 3 else "")) if len(rows) > 1 else ""))
+    return (f'<p class="warnline">{esc(warn)}</p>' if warn else "") + "".join(out), total, names_summary(per_day, 8)
 
 
 def _acro(title: str) -> set[str]:
@@ -260,18 +284,20 @@ def headlines_html(unread: list, archive_fn, limit: int) -> str:
         for it in lst:
             arch = f' · <a class="note" href="{esc(archive_fn(it), quote=True)}" target="_blank" rel="noopener">archive</a>' if archive_fn(it) else ""
             li.append(f'<li><a href="{esc(it.link, quote=True)}" target="_blank" rel="noopener">{esc(it.title)}</a> <span class="note">{esc(it.publisher or it.source)}</span>{arch}</li>')
-        subs.append(fold("sub", f"h-{_slug(r)}", r, f'<ul class="hl">{"".join(li)}</ul>', str(len(lst)), "#868e96"))
+        subs.append(fold("sub", f"h-{_slug(r)}", r, f'<ul class="hl">{"".join(li)}</ul>', str(len(lst)), "#868e96",
+                         summary="Includes: " + " · ".join(_short(it.title, 50) for it in lst[:2]) + (f" · +{len(lst) - 2} more" if len(lst) > 2 else "") if len(lst) > 1 else ""))
     if not subs:
         return ""
     intro = '<p class="intro">For these the article text could not be read even after archives and a search, so nothing is summarised. Tap a region to open its list.</p>'
-    return fold("block", "headlines", "What we missed: headlines we could not read", intro + "".join(subs), str(shown), "#868e96", "Not read")
+    return fold("block", "headlines", "What we missed: headlines we could not read", intro + "".join(subs), str(shown), "#868e96", "Not read",
+                summary=names_summary([(r, len(l)) for r, l in groups.items() if l]))
 
 
-def coverage_html(stats: dict, coverage: list, reasons: list, llm, llm_error: str) -> str:
+def coverage_html(stats: dict, coverage: list, reasons: list, llm, llm_error: str, inr: float = 0.0) -> str:
     rows = "".join(f'<tr><td>{esc(c["feed"])}</td><td class="{"ok" if c["ok"] else "bad"}">{"ok" if c["ok"] else "FAILED: " + esc(c["reason"][:90])}{(" · " + esc(c["reason"][:110])) if c["ok"] and c["reason"] else ""}</td><td>{c["kept"]}</td></tr>' for c in coverage)
     why = "".join(f"<li>{n} × {esc(k)}</li>" for k, n in reasons)
     use = (f"<p>Model use this run: {llm.tokens_in:,} input and {llm.tokens_out:,} output tokens, {getattr(llm, 'search_count', 0)} searches "
-           f"(estimated ${llm.est_cost_usd():.3f} at the prices in config/news_sources.yaml).</p>") if llm is not None else ""
+           f"(estimated ${llm.est_cost_usd():.3f}{f', about ₹{llm.est_cost_usd() * inr:,.0f}' if inr else ''}, at the prices in config/news_sources.yaml).</p>") if llm is not None else ""
     err = f'<p class="warnline">Model check failed: {esc(llm_error)}</p>' if llm_error else ""
     inner = (f'<div class="quiet">{err}<p>Articles read: {stats["read_direct"]} directly, {stats["read_wayback"]} via Wayback, {stats["read_archive"]} via other archives, '
              f'{stats["read_search"]} by finding the same story elsewhere, {stats["read_partial"]} partially, {stats["read_summary"]} from feed summaries. '
@@ -310,13 +336,19 @@ summary{list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent}s
 summary:before{content:"›";font:700 1.3rem/1 var(--sans);float:left;margin:.05rem .55rem 0 0;color:var(--accent,var(--mute));transition:transform .15s}
 details[open]>summary:before{transform:rotate(90deg)}
 details.block{margin:.9rem 0;border-top:3px solid var(--accent,var(--ink))}
-details.block>summary{display:flex;align-items:baseline;gap:.6rem;padding:.7rem 0;min-height:48px}
+details.block>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .6rem;padding:.7rem 0;min-height:48px}
+.sum{flex:0 0 100%;order:9;font:400 .74rem/1.4 var(--sans);color:var(--mute);padding-left:1.15rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+details[open]>summary>.sum{display:none}
 .ft{font:800 1.25rem/1.15 var(--serif);flex:1;min-width:0}.kick{font:800 .6rem var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent,var(--mute));order:3}
 .count{font:700 .72rem var(--sans);color:var(--mute);background:var(--chip);border-radius:99px;padding:.15rem .55rem;white-space:nowrap}
-details.sub{margin:.35rem 0;border-left:4px solid var(--accent,var(--rule));background:var(--card);border-radius:0 8px 8px 0}
-details.sub>summary{display:flex;align-items:baseline;gap:.6rem;padding:.7rem .8rem;min-height:46px}details.sub>summary .ft{font-size:1.08rem}
-details.sub>.inner{padding:.1rem .6rem .6rem .8rem}details.block>.inner{padding:0 0 .6rem}
-details.st{border-top:1px solid var(--rule)}details.st:first-child{border-top:0}
+/* depth you can see: each level is indented and a shade deeper in the section's own colour; an open item's headline gets a tinted bar */
+details.sub{margin:.35rem 0 .35rem .6rem;border-left:5px solid var(--accent,var(--rule));background:color-mix(in srgb,var(--accent,#888) 7%,var(--card));border-radius:0 8px 8px 0}
+details.sub>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .6rem;padding:.7rem .8rem;min-height:46px}details.sub>summary .ft{font-size:1.08rem}
+details.sub>.inner{padding:.1rem .4rem .6rem .6rem}details.block>.inner{padding:0 0 .6rem}
+details.block[open]>summary,details.sub[open]>summary{background:color-mix(in srgb,var(--accent,#888) 14%,transparent);border-radius:0 8px 0 0}
+details.st{border-top:1px solid var(--rule);margin-left:.4rem;padding-left:.45rem;border-left:3px solid color-mix(in srgb,var(--accent,#888) 45%,transparent)}details.st:first-child{border-top:0}
+details.st[open]{background:color-mix(in srgb,var(--accent,#888) 6%,var(--card));border-left-color:var(--accent,#888)}
+details.st[open]>summary{font-weight:inherit;border-bottom:1px dotted var(--rule)}
 details.st>summary{padding:.65rem .1rem;min-height:46px}
 .ht{display:block;font:700 1.02rem/1.28 var(--serif);overflow:hidden}
 .meta{display:block;font:500 .7rem var(--sans);color:var(--mute);margin-top:.15rem;overflow:hidden}
@@ -324,10 +356,11 @@ details.st>summary{padding:.65rem .1rem;min-height:46px}
 details.st>.body{padding:.1rem .2rem .9rem 1.15rem}.by{font:500 .72rem var(--sans);color:var(--mute);margin-bottom:.5rem}
 .body p{margin:0 0 .75rem}.body p.also{font:400 .82rem var(--sans);color:var(--mute)}
 .cite{font:500 .78rem var(--sans)}a.src{font-weight:700;color:var(--accent,var(--red));text-decoration:none;border-bottom:1px solid currentColor}.note{font:400 .7rem var(--sans);color:var(--mute);text-decoration:none}
-.related{margin:.6rem 0 0;border-top:1px dashed var(--rule);padding-top:.4rem}.related-h{font:800 .62rem var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
-.related details.st{border-left:3px solid var(--accent,var(--rule));margin-top:.35rem;background:color-mix(in srgb,var(--chip) 50%,transparent);padding-left:.4rem}
+.related{margin:.6rem 0 0 .3rem;border-top:1px dashed var(--rule);padding-top:.4rem}.related-h{font:800 .62rem var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.related details.st{border-left:3px solid var(--accent,var(--rule));margin:.35rem 0 .35rem .4rem;background:color-mix(in srgb,var(--accent,#888) 13%,var(--card));padding-left:.5rem}
+.related details.st[open]{background:color-mix(in srgb,var(--accent,#888) 19%,var(--card))}
 details.st.ev .et{font:700 .74rem var(--sans);color:var(--mute);margin-right:.4rem}
-.five{margin:1rem 0;background:var(--card);border-top:4px solid var(--red);border-radius:0 0 8px 8px;padding:.2rem .9rem .3rem}
+.five{--accent:var(--red);margin:1rem 0;background:var(--card);border-top:4px solid var(--red);border-radius:0 0 8px 8px;padding:.2rem .9rem .3rem}
 .five h2{font:800 .74rem var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin:.7rem 0 .2rem}
 .five details.st>summary .ht{font-size:1.1rem}
 ul.hl{margin:.2rem 0 .6rem;padding-left:1rem;font:400 .9rem/1.45 var(--sans)}ul.hl li{margin:.4rem 0}
@@ -338,13 +371,28 @@ footer.foot{margin:2.5rem 0 2.5rem;padding-top:1rem;border-top:3px double var(--
 .totop{position:fixed;right:14px;bottom:16px;z-index:30;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;text-decoration:none;font:700 1.2rem var(--sans);box-shadow:0 2px 10px #0004;opacity:.88}
 @media(max-width:560px){.kick{display:none}}
 @media(min-width:900px){body{font-size:1.08rem}.wrap{max-width:900px}}
-@media print{nav.bar,.ctl,.totop{display:none}summary:before{display:none}details.block,details.sub{margin:.4rem 0}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
+@media print{nav.bar,.ctl,.totop{display:none}summary:before{display:none}details.block{margin:.4rem 0}details.sub{margin:.4rem 0 .4rem .3rem}details.st{margin-left:.3rem}.related{margin-left:.2rem}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
 """
 
 JS = ("function openTo(el){for(var n=el;n;n=n.parentElement){if(n.tagName==='DETAILS')n.open=true;}}"
       "document.addEventListener('click',function(e){var a=e.target.closest('a[href^=\"#\"]');if(a&&a.hash.length>1){var t=document.getElementById(a.hash.slice(1));"
       "if(t){openTo(t);setTimeout(function(){t.scrollIntoView({behavior:'smooth',block:'start'})},30);e.preventDefault();}return;}"
       "var b=e.target.closest('button[data-all]');if(b){var o=b.getAttribute('data-all')==='open';document.querySelectorAll('details').forEach(function(d){d.open=o;});}});")
+
+
+def outlets(c: Cluster) -> int:
+    return len({x.name for st in c.stories for x in st.sources})
+
+
+def lead_clusters(all_clusters: list[Cluster], lim: dict) -> list[Cluster]:
+    """Today in X. A storyline earns the top by being carried by several outlets (default 3 or more); there are never fewer than `top_floor`
+    (the strongest ones anyway) or more than `top_max`. X is simply how many qualified, so a quiet day is short and a big day is longer."""
+    need, floor, cap = int(lim.get("top_min_outlets", 3)), int(lim.get("top_floor", 3)), int(lim.get("top_max", 15))
+    pick = [i for i, c in enumerate(all_clusters) if outlets(c) >= need][:cap]
+    for i in range(min(floor, len(all_clusters))):
+        if i not in pick:
+            pick.append(i)
+    return [all_clusters[i] for i in sorted(pick)[:cap]]
 
 
 def _first_sentence(st: Story) -> str:
@@ -364,7 +412,7 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     general = [s for s in rest if not is_commodity(s)]
 
     all_clusters = cluster(stories)
-    five = all_clusters[:5]
+    top = lead_clusters(all_clusters, lim)
     words = sum(len(" ".join(c for p in s.paras for c in p.claims).split()) for s in stories)
     mins = max(1, round(words / 230))
 
@@ -376,34 +424,40 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     rows, gnote = load_glance(ROOT_DASH(cfg), now)
     parts.append(markets_html(rows, gnote))
 
-    if five:
-        parts.append('<section class="five" id="top"><h2>Today in five</h2>' + "".join(cluster_details(c, f"top-{i}") for i, c in enumerate(five)) + "</section>")
+    if top:
+        parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">The stories that matter most this morning: those carried by several outlets come first. Tap one to read it.</p>'
+                     + "".join(cluster_details(c, f"top-{i}") for i, c in enumerate(top)) + "</section>")
     elif not llm_note:
         parts.append('<div class="alert">No story could be built from the sources in this window.</div>')
 
-    ev_html, n_ev = event_rows(cal, now, int(lim.get("calendar_horizon_days", 21)), int(lim.get("calendar_review_max_age_days", 7)))
+    ev_html, n_ev, ev_sum = event_rows(cal, now, int(lim.get("calendar_horizon_days", 21)), int(lim.get("calendar_review_max_age_days", 7)))
     if cal_note:
         ev_html = f'<p class="intro">Calendar: {esc(cal_note)}</p>' + ev_html
-    parts.append(fold("block", "events", "Upcoming events", ev_html, f"{n_ev} · times in IST", "#495057", "Looking ahead"))
+    parts.append(fold("block", "events", "Upcoming events", ev_html, f"{n_ev} · times in IST", "#495057", "Looking ahead", summary=ev_sum))
 
     if upd_groups:
-        inner = "".join(fold("sub", f"u-{_slug(lbl)}", lbl, "".join(cluster_details(c, f"u-{i}-{j}") for j, c in enumerate(cluster(sts))), str(len(sts)), "#2b8a3e")
+        inner = "".join(fold("sub", f"u-{_slug(lbl)}", lbl, "".join(cluster_details(c, f"u-{i}-{j}") for j, c in enumerate(cluster(sts))), str(len(sts)), "#2b8a3e", summary=leads_summary(cluster(sts)))
                         for i, (lbl, sts) in enumerate(upd_groups))
-        parts.append(fold("block", "updates", "Event updates", inner, str(sum(len(s) for _, s in upd_groups)), "#2b8a3e", "What happened"))
+        parts.append(fold("block", "updates", "Event updates", inner, str(sum(len(s) for _, s in upd_groups)), "#2b8a3e", "What happened",
+                          summary=names_summary([(lbl, len(sts)) for lbl, sts in upd_groups], 5)))
 
     if commodity:
-        parts.append(fold("block", "commodities", "Energy and metals", groups_html("c", by_commodity(commodity)), str(len(commodity)), "#b8860b", "The trading desk"))
+        com = by_commodity(commodity)
+        parts.append(fold("block", "commodities", "Energy and metals", groups_html("c", com), str(len(commodity)), "#b8860b", "The trading desk",
+                          summary=names_summary([(n, _n(cl)) for n, cl in com])))
 
     reg, sec = by_region(general), by_sector(general, sector_order)
     parts.append(fold("block", "regions", "News by jurisdiction", groups_html("r", reg) or '<p class="intro">No stories in this window.</p>',
-                      str(sum(_n(cl) for _, cl in reg)), "#d9480f", "Read by place", open_=True))
+                      str(sum(_n(cl) for _, cl in reg)), "#d9480f", "Read by place", open_=True,
+                      summary=names_summary([(n, _n(cl)) for n, cl in reg])))
     parts.append(fold("block", "sectors", "News by sector", groups_html("s", sec, True) or '<p class="intro">No sector stories in this window.</p>',
-                      str(sum(_n(cl) for _, cl in sec)), "#5b3cc4", "Read by industry"))
+                      str(sum(_n(cl) for _, cl in sec)), "#5b3cc4", "Read by industry",
+                      summary=names_summary([(n, _n(cl)) for n, cl in sec])))
 
     parts.append(headlines_html(unread, archive, int(lim.get("in_brief_max", 450))))
-    parts.append(coverage_html(stats, coverage, reasons, llm, llm_error))
+    parts.append(coverage_html(stats, coverage, reasons, llm, llm_error, float((cfg.get('llm') or {}).get('usd_inr', 0) or 0)))
 
-    nav = ['<a href="#top">Today</a>', '<a href="#events">Events</a>']
+    nav = ['<a href="#top">Top</a>', '<a href="#events">Events</a>']
     if upd_groups:
         nav.append('<a href="#updates">Updates</a>')
     if commodity:
