@@ -222,5 +222,6 @@ calendar_refresh:
 # Newsletters delivered to your Gmail inbox: ADDITIONAL to the feeds above. Needs GMAIL_USER and GMAIL_APP_PASSWORD (secrets).
 #   name: shown as the source; from: part of the sender address (e.g. "news@example.com" or "@example.com");
 #   subject_contains: optional filter; category: india|world|tech|...; region: india|americas|europe|apac|middleeast or empty.
-newsletters: []
+newsletters:
+  - {name: "Exec Sum", from: "news@execsum.co", category: world, region: ""}
 #  - {name: "Example Daily", from: "@example.com", category: world, region: ""}

@@ -22,7 +22,7 @@ def html_to_pdf(html_path: Path, pdf_path: Path) -> Path:
         pg = b.new_page()
         pg.goto(html_path.resolve().as_uri(), wait_until="networkidle")
         pg.emulate_media(media="print")
-        pg.evaluate("document.querySelectorAll('details.more').forEach(d => d.open = true)")     # related stories in full; headlines and coverage stay folded
+        pg.evaluate("document.querySelectorAll('details').forEach(d => d.open = true); document.querySelectorAll('#headlines details, #coverage details, #headlines, #coverage').forEach(d => d.open = false)")     # everything open on paper, except the missed headlines and the coverage panel
         pg.pdf(path=str(pdf_path), format="A5", margin={"top": "9mm", "bottom": "10mm", "left": "7mm", "right": "7mm"}, print_background=True,
                display_header_footer=True, header_template="<span></span>",
                footer_template="<div style='font-size:7px;width:100%;text-align:center;color:#777'>The Morning Edition · <span class='pageNumber'></span>/<span class='totalPages'></span></div>")

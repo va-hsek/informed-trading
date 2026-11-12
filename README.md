@@ -80,7 +80,12 @@ India 10-year yield: Alice Blue has no bond yield, so it comes from the ABSL AMC
 
 Suggested schedule: GitHub Actions `.github/workflows/morning-edition.yml` (05:30 IST) and `calendar-refresh.yml` (weekly).
 
+### Page structure
+Every unit is a one-line headline that opens: sections, subsections, storylines and stories. Order: Today in five, Upcoming events, Event updates (official
+releases and stories matching a recent calendar event), Energy and metals, News by jurisdiction, News by sector, What we missed, Coverage.
+
 ### Phone PDF and delivery
+Email (any number of recipients): secrets `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `EMAIL_TO` (comma-separated). The PDF is attached; recipients are blind-copied.
 Each morning run makes an A5 PDF (`news/pdf.py`) and sends it with `news/deliver.py` to Telegram and/or WhatsApp, whichever secrets exist.
 Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TO`, optional `WHATSAPP_TEMPLATE`, `WHATSAPP_TEMPLATE_LANG`.
 Nothing is sent when no stories were built.

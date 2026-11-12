@@ -299,10 +299,12 @@ def test_magazine_page_has_lenses_collapsed_headlines_and_no_unverified_text():
                  extract_errors=0, claims_kept=2, claims_dropped=0)
     page = render_magazine(NOW_M, st, [(it, "x")], stats, [{"feed": "F", "ok": False, "reason": "HTTP 403", "kept": 0}], [("reason", 3)],
                            "", "", None, "", {}, cfg, lambda i: "")
-    assert "By jurisdiction" in page and "By sector" in page and "Energy and metals" in page
+    assert "News by jurisdiction" in page and "News by sector" in page and "Energy and metals" in page and "Upcoming events" in page
     assert "The RBI kept the repo rate at 5.50 percent." in page and 'href="https://o.example/' in page
-    assert "<details><summary><h2>Coverage and quality</h2>" in page                      # collapsed by default
-    assert '<details class="hl">' in page and "Unreadable headline here" in page         # headlines behind a fold
+    assert '<details class="block" id="coverage"' in page and 'id="coverage" style="--accent:#adb5bd" open' not in page      # folded by default
+    assert 'id="headlines"' in page and "Unreadable headline here" in page                                                    # missed headlines, behind a fold
+    assert page.index('id="events"') < page.index('id="regions"') < page.index('id="headlines"') < page.index('id="coverage"')   # events first, missed last
+    assert '<details class="st"' in page and "<summary><span class=\"ht\">RBI holds repo rate steady" in page               # each story is a one-line headline
     assert "Model check failed" not in page
 
 
@@ -466,3 +468,35 @@ def test_newsletter_links_become_additional_items_and_tracking_links_are_never_k
     assert "1 link(s) dropped" in cov[0]["reason"] and "trk.example" not in " ".join(i.link for i in items)
     _, cov = fetch_newsletters([{"name": "Daily", "from": "x"}], {}, now, now - timedelta(hours=24))
     assert not cov[0]["ok"] and "GMAIL_USER" in cov[0]["reason"]
+
+
+def test_event_updates_pull_matching_stories_up_and_out_of_the_news_sections():
+    from news.magazine import event_updates
+    a = _story("US CPI rises 0.3 percent in October", "USA and Americas", ["americas"], [], ["US consumer prices rose 0.3 percent in October."], 8)
+    b = _story("Tractor sales jump", "India", ["india"], [], ["Tractor makers reported higher sales."], 4)
+    o = _story("RBI statement on liquidity", "Official releases", ["india"], [], ["The RBI announced liquidity operations."], 3)
+    cal = {"events": [{"date": "2026-11-12", "title": "US October CPI"}, {"date": "2026-11-30", "title": "Far future event"}]}
+    groups, used = event_updates([a, b, o], cal, NOW_M.replace(day=12))
+    labels = [g[0] for g in groups]
+    assert labels[0] == "Official releases" and any("US October CPI" in l for l in labels)
+    assert id(a) in used and id(o) in used and id(b) not in used
+
+
+def test_email_goes_to_many_recipients_as_bcc_with_the_pdf(tmp_path):
+    from news.deliver import deliver
+    pdf = tmp_path / "e.pdf"
+    pdf.write_bytes(b"%PDF-1.4 x")
+    sent = {}
+    class SMTP:
+        def __init__(self, host, port, timeout=0): sent["host"] = host
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def login(self, u, p): sent["login"] = (u, p)
+        def send_message(self, msg, from_addr=None, to_addrs=None):
+            sent.update(to_addrs=to_addrs, to_header=msg["To"], attach=[p.get_filename() for p in msg.iter_attachments()])
+    sec = {"GMAIL_USER": "me@gmail.com", "GMAIL_APP_PASSWORD": "pw", "EMAIL_TO": "a@x.com, b@y.org;c@z.in"}
+    log = deliver(sec, pdf, 50, "12 Nov 2026", smtp_factory=SMTP, headlines=["One", "Two"])
+    assert log == ["Email: PDF sent to 3 recipient(s)"] and sent["to_addrs"] == ["a@x.com", "b@y.org", "c@z.in"]
+    assert sent["to_header"] == "me@gmail.com" and sent["attach"] == ["e.pdf"] and sent["host"] == "smtp.gmail.com"
+    log = deliver(sec, pdf, 0, "12 Nov 2026", smtp_factory=SMTP)
+    assert any("notice sent" in x for x in log) and sent["attach"] == []
