@@ -321,7 +321,7 @@ details.hl summary{display:flex;justify-content:space-between;padding:.5rem 0;co
 .day ul{list-style:none;margin:0;padding:.3rem 1rem .6rem}.day li{display:grid;grid-template-columns:4.2rem 1fr;gap:.6rem;padding:.65rem 0;border-top:1px solid var(--rule)}.day li:first-child{border-top:0}
 .et{font:700 .74rem var(--sans);color:var(--mute);padding-top:.2rem}.ec{font:400 .92rem/1.45 var(--sans)}.ec strong{font:700 1rem/1.3 var(--serif)}.ex{color:var(--mute);margin:.15rem 0 .3rem}
 footer.foot{margin:3rem 0 2.5rem;padding-top:1rem;border-top:3px double var(--ink);font:400 .8rem/1.55 var(--sans);color:var(--mute)}
-@media print{nav.bar,.switch{display:none}.lens{display:block!important}.storyline{break-inside:avoid}}
+@media print{nav.bar,.switch{display:none}.lens-r{display:block!important}.lens-s{display:none!important}.front,.grid,.days{display:block}.storyline{margin-bottom:.8rem;break-inside:auto}.five{margin-bottom:.8rem}.rel,.day li,.tile{break-inside:avoid}h2,h3,h4{break-after:avoid}body{font-size:.92rem}}
 @media(max-width:640px){
 body{font-size:1.02rem;line-height:1.58}.wrap{padding:0 14px}
 .mast{padding:1.1rem 14px .6rem}.mast .top{font-size:.6rem;letter-spacing:.12em;justify-content:center;gap:.2rem 1rem}

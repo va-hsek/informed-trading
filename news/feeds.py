@@ -34,6 +34,7 @@ class Item:
     regions: list[str] = field(default_factory=list)
     feed_region: str = ""
     sectors: list[str] = field(default_factory=list)
+    extra: bool = False                  # True for newsletter items: read on top of the normal quotas
 
 
 def _clean(s: Optional[str]) -> str:

@@ -127,6 +127,7 @@ limits:
   max_items_per_feed: 90
   edition_anchor_ist: "05:30"      # the window runs from this time yesterday to now; at a 05:30 run that is exactly 24 hours
   window_hours: 24
+  newsletter_reads: 120            # extra articles read from newsletters, on top of max_articles_read
   max_articles_read: 780          # hard cap on LLM-read articles per run (controls cost)
   max_article_chars: 12000        # text sent to the model per article
   min_article_chars: 150          # short pieces are kept; only pages with a paywall/CAPTCHA marker or under 150 characters go to the archive fallbacks
@@ -217,3 +218,9 @@ calendar_refresh:
   search_tool_type: web_search_20250305
   price_input_per_mtok: 2.0        # Claude Sonnet 5.5
   price_output_per_mtok: 10.0
+
+# Newsletters delivered to your Gmail inbox: ADDITIONAL to the feeds above. Needs GMAIL_USER and GMAIL_APP_PASSWORD (secrets).
+#   name: shown as the source; from: part of the sender address (e.g. "news@example.com" or "@example.com");
+#   subject_contains: optional filter; category: india|world|tech|...; region: india|americas|europe|apac|middleeast or empty.
+newsletters: []
+#  - {name: "Example Daily", from: "@example.com", category: world, region: ""}

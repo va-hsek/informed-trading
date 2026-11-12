@@ -26,6 +26,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python -m news.run_news
       - name: Save the edition and its data file
         run: |
@@ -37,8 +39,29 @@ jobs:
           git diff --cached --quiet || git commit -m "Morning Edition $(TZ=Asia/Kolkata date +'%Y-%m-%d %H:%M IST')"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
+      - name: Make the phone PDF
+        id: pdf
+        continue-on-error: true
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+          python -m news.pdf
+      - name: Send the PDF to your phone (never fails the run)
+        if: steps.pdf.outcome == 'success'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_TO: ${{ secrets.WHATSAPP_TO }}
+          WHATSAPP_TEMPLATE: ${{ secrets.WHATSAPP_TEMPLATE }}
+          WHATSAPP_TEMPLATE_LANG: ${{ secrets.WHATSAPP_TEMPLATE_LANG }}
+        run: python -m news.deliver
       - uses: actions/upload-artifact@v4
         with:
           name: morning-edition
-          path: reports/news_*.html
+          path: |
+            reports/news_*.html
+            reports/news_*.pdf
           retention-days: 30

@@ -79,3 +79,12 @@ Anything unconfirmed is flagged and the report fails closed. No index CSVs are n
 India 10-year yield: Alice Blue has no bond yield, so it comes from the ABSL AMC Daily Fixed Income Tracker PDF (single source, kept in `data/history/india_10y_benchmark.csv`).
 
 Suggested schedule: GitHub Actions `.github/workflows/morning-edition.yml` (05:30 IST) and `calendar-refresh.yml` (weekly).
+
+### Phone PDF and delivery
+Each morning run makes an A5 PDF (`news/pdf.py`) and sends it with `news/deliver.py` to Telegram and/or WhatsApp, whichever secrets exist.
+Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TO`, optional `WHATSAPP_TEMPLATE`, `WHATSAPP_TEMPLATE_LANG`.
+Nothing is sent when no stories were built.
+
+### Newsletters
+Add your newsletter under `newsletters:` in `config/news_sources.yaml` and set secrets `GMAIL_USER` and `GMAIL_APP_PASSWORD` (a Google app password). Its linked
+headlines are read as extra items on top of the normal quotas (`limits.newsletter_reads`).

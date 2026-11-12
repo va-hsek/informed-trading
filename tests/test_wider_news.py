@@ -400,3 +400,69 @@ def test_headline_only_item_is_read_after_decoding(monkeypatch):
         def allowed(self, u): return True
     art = articles.read_article(it, R(), lambda u, *a, **k: body.encode(), lambda *a, **k: {}, 150, 12000)
     assert art["via"] == "direct" and it.origin_url == "https://pub.example/story" and not it.headline_only
+
+
+# ---------------- delivery and newsletters ----------------
+class _Resp:
+    def __init__(self, body): self.body = body
+    def read(self): return json.dumps(self.body).encode()
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+
+
+def test_delivery_sends_nothing_without_stories_and_never_leaks_tokens(tmp_path):
+    from news.deliver import deliver
+    pdf = tmp_path / "e.pdf"
+    pdf.write_bytes(b"%PDF-1.4 test")
+    calls = []
+    def opener(req, timeout=0):
+        calls.append((req.full_url, req.data))
+        return _Resp({"id": "MEDIA1", "ok": True})
+    sec = {"TELEGRAM_BOT_TOKEN": "123:SECRET", "TELEGRAM_CHAT_ID": "55", "WHATSAPP_TOKEN": "WATOKEN", "WHATSAPP_PHONE_NUMBER_ID": "999", "WHATSAPP_TO": "+919800000000"}
+    log = deliver(sec, pdf, 0, "12 Nov 2026", opener)
+    assert any("not sent" in x for x in log) and len(calls) == 1 and b"sendMessage" in calls[0][0].encode()      # only a text notice on Telegram
+    calls.clear()
+    log = deliver(sec, pdf, 300, "12 Nov 2026", opener)
+    urls = [c[0] for c in calls]
+    assert any(u.endswith("/sendDocument") for u in urls) and any(u.endswith("/999/media") for u in urls) and any(u.endswith("/999/messages") for u in urls)
+    wa = json.loads([c[1] for c in calls if c[0].endswith("/messages")][0])
+    assert wa["to"] == "919800000000" and wa["type"] == "document" and wa["document"]["id"] == "MEDIA1"
+    sec["WHATSAPP_TEMPLATE"] = "morning_edition"
+    calls.clear()
+    deliver(sec, pdf, 300, "12 Nov 2026", opener)
+    wa = json.loads([c[1] for c in calls if c[0].endswith("/messages")][0])
+    assert wa["type"] == "template" and wa["template"]["components"][0]["parameters"][0]["document"]["id"] == "MEDIA1"
+    def boom(req, timeout=0): raise RuntimeError("bad token WATOKEN 123:SECRET")
+    log = deliver(sec, pdf, 300, "12 Nov 2026", boom)
+    assert all("WATOKEN" not in x and "SECRET" not in x for x in log) and any("FAILED" in x for x in log)
+    assert deliver({}, pdf, 300, "x", opener)[0].startswith("No delivery channel")
+
+
+def test_newsletter_links_become_additional_items_and_tracking_links_are_never_kept():
+    from news.newsletter import clean_url, fetch_newsletters, parse_newsletter
+    html = ("<html><body><p>Hello! <a href='https://t.example/unsubscribe?u=1'>Unsubscribe from this newsletter list</a></p>"
+            "<table><tr><td><a href='https://trk.example/c/AAA'>Reserve Bank holds repo rate at 5.5 percent in surprise move</a> The central bank cited food prices and a weak rupee in its statement on Wednesday.</td></tr>"
+            "<tr><td><a href='https://trk.example/c/BBB'>Gold hits record high as dollar index slips this week</a></td></tr><tr><td>Gold rose 1.2 percent to a fresh peak on Thursday.</td></tr>"
+            "<tr><td><a href='https://trk.example/c/CCC'>Another long headline whose real address cannot be found</a> Blurb text that is long enough to count here.</td></tr></table></body></html>")
+    got = parse_newsletter(html)
+    assert [g["title"][:12] for g in got] == ["Reserve Bank", "Gold hits re", "Another long"] and "weak rupee" in got[0]["blurb"] and "fresh peak" in got[1]["blurb"]
+    assert clean_url("https://pub.example/a?id=7&utm_source=nl&token=abc#x") == "https://pub.example/a?id=7"
+    from email.message import EmailMessage
+    m = EmailMessage()
+    m["From"], m["Subject"], m["Date"] = "Daily <news@nl.example>", "Today", "Thu, 12 Nov 2026 02:00:00 +0000"
+    m.set_content("x"); m.add_alternative(html, subtype="html")
+    class IMAP:
+        def __init__(self, host): pass
+        def login(self, u, p): assert (u, p) == ("me@gmail.com", "apppw")
+        def select(self, box, readonly=False): assert readonly
+        def search(self, *a): return "OK", [b"1"]
+        def fetch(self, mid, what): return "OK", [(b"1", m.as_bytes())]
+        def logout(self): pass
+    now = datetime(2026, 11, 12, 6, 0, tzinfo=timezone.utc)
+    res = {"https://trk.example/c/AAA": "https://pub.example/rbi?utm_x=1", "https://trk.example/c/BBB": "https://pub.example/gold", "https://trk.example/c/CCC": None}
+    items, cov = fetch_newsletters([{"name": "Daily", "from": "@nl.example"}], {"GMAIL_USER": "me@gmail.com", "GMAIL_APP_PASSWORD": "apppw"}, now,
+                                   now - timedelta(hours=24), IMAP, lambda u: res[u])
+    assert [i.link for i in items] == ["https://pub.example/rbi", "https://pub.example/gold"] and all(i.extra and i.publisher == "Daily" for i in items)
+    assert "1 link(s) dropped" in cov[0]["reason"] and "trk.example" not in " ".join(i.link for i in items)
+    _, cov = fetch_newsletters([{"name": "Daily", "from": "x"}], {}, now, now - timedelta(hours=24))
+    assert not cov[0]["ok"] and "GMAIL_USER" in cov[0]["reason"]

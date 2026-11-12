@@ -25,8 +25,9 @@ from core.secrets import load_secrets
 from news import calendar_refresh as cal_refresh
 from news.articles import RobotsCache, read_article
 from news.claims import extract_claims
-from news.feeds import collect_items, edition_window, tag_topics
+from news.feeds import collect_items, edition_window, norm_title, tag_topics
 from news.headline_search import find_alternative
+from news.newsletter import fetch_newsletters
 from news.llm import LLM, make_llm
 from news.magazine import render_magazine
 from news.paper import (SECTIONS, Para, Source, Story, item_score, merge_stories, render_calendar, render_glance, render_story,
@@ -88,6 +89,11 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     now_utc = now.astimezone(timezone.utc)
     win_start = edition_window(now_utc, lim.get("edition_anchor_ist", "05:30"), float(lim.get("window_hours", 24)))
     items, coverage = collect_items(cfg["feeds"], now_utc, http_get, win_start, lim["max_items_per_feed"])
+    nl_items, nl_cov = fetch_newsletters(cfg.get("newsletters") or [], secrets, now_utc, win_start)
+    have = {norm_title(i.title) for i in items} | {i.link for i in items}
+    nl_items = [i for i in nl_items if norm_title(i.title) not in have and i.link not in have]       # additional only: no duplicate of a feed story
+    items += nl_items
+    coverage += nl_cov
     for it in items:
         it.topics = tag_topics(it, cfg["topics"])
         it.regions = tag_topics(it, cfg.get("regions") or {})
@@ -115,7 +121,8 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     hs_on = bool(hs.get("enabled")) and llm is not None
     hs_left = int(hs.get("max_per_run", 150))
     max_cost = float(lim.get("max_cost_usd_per_run", 8.0))
-    readable = pick_for_reading(items, lim, include_headline_only=True)
+    readable = pick_for_reading([i for i in items if not i.extra], lim, include_headline_only=True)
+    readable += sorted(nl_items, key=lambda i: -item_score(i))[: int(lim.get("newsletter_reads", 120))]      # newsletters: extra quota
     robots = RobotsCache(http_get)
 
     stats = {"read_direct": 0, "read_wayback": 0, "read_summary": 0, "read_archive": 0, "read_search": 0, "read_partial": 0, "cost_stopped": 0, "unreadable": 0, "claims_kept": 0, "claims_dropped": 0,
