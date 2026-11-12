@@ -268,7 +268,7 @@ def headlines_html(unread: list, archive_fn, limit: int) -> str:
 
 
 def coverage_html(stats: dict, coverage: list, reasons: list, llm, llm_error: str) -> str:
-    rows = "".join(f'<tr><td>{esc(c["feed"])}</td><td class="{"ok" if c["ok"] else "bad"}">{"ok" if c["ok"] else "FAILED: " + esc(c["reason"][:90])}</td><td>{c["kept"]}</td></tr>' for c in coverage)
+    rows = "".join(f'<tr><td>{esc(c["feed"])}</td><td class="{"ok" if c["ok"] else "bad"}">{"ok" if c["ok"] else "FAILED: " + esc(c["reason"][:90])}{(" · " + esc(c["reason"][:110])) if c["ok"] and c["reason"] else ""}</td><td>{c["kept"]}</td></tr>' for c in coverage)
     why = "".join(f"<li>{n} × {esc(k)}</li>" for k, n in reasons)
     use = (f"<p>Model use this run: {llm.tokens_in:,} input and {llm.tokens_out:,} output tokens, {getattr(llm, 'search_count', 0)} searches "
            f"(estimated ${llm.est_cost_usd():.3f} at the prices in config/news_sources.yaml).</p>") if llm is not None else ""
