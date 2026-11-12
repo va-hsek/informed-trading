@@ -1,60 +1,48 @@
 {
- "generated": "2026-11-11T10:01:57.967052+05:30",
+ "generated": "2026-11-12T11:07:27.463597+05:30",
  "provider": "gemini",
  "model": "gemini-3.5-flash-lite",
  "llm_preflight_error": "",
  "stats": {
-  "read_direct": 5,
+  "read_direct": 384,
   "read_wayback": 0,
-  "read_summary": 0,
+  "read_summary": 60,
   "read_archive": 0,
   "read_search": 0,
-  "read_partial": 0,
+  "read_partial": 1,
   "cost_stopped": 0,
-  "unreadable": 229,
-  "claims_kept": 26,
-  "claims_dropped": 5,
-  "extract_errors": 546
+  "unreadable": 238,
+  "claims_kept": 1880,
+  "claims_dropped": 319,
+  "extract_errors": 97
  },
  "top_failure_reasons": [
   [
-   "model step failed: FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
-   546
-  ],
-  [
    "not readable: robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failur",
-   120
+   126
   ],
   [
-   "not readable: page fetch failed (HTTP 403 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
-   50
+   "model step failed: FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
+   94
   ],
   [
    "not readable: only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fail",
-   39
+   55
   ],
   [
-   "not readable: only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or se",
+   "not readable: page fetch failed (HTTP 403 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
+   43
+  ],
+  [
+   "not readable: page fetch failed (HTTP 429 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
    3
   ],
   [
-   "not readable: only 115 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fa",
+   "model step failed: FetchError: model API call failed: HTTP 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Pleas",
    3
-  ],
-  [
-   "not readable: robots.txt disallows automated access; Wayback unusable (only 0 characters of text (minimum 150)); archive lookup failed (Memento aggregator",
-   2
-  ],
-  [
-   "not readable: page fetch failed (HTTP 403 for <url> Wayback unusable (only 0 characters of text (minimum 150)); archive lookup failed (Memento aggregator ",
-   2
   ],
   [
    "not readable: robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or serv",
-   1
-  ],
-  [
-   "not readable: page fetch failed (URLError: <urlopen error [Errno 111] Connection refused> for <url> no suitable Wayback snapshot; archive lookup failed (M",
    1
   ],
   [
@@ -62,101 +50,108 @@
    1
   ],
   [
-   "not readable: only 61 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fai",
+   "not readable: page fetch failed (HTTP 404 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
    1
   ],
   [
-   "not readable: page fetch failed (HTTP 429 for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failure",
+   "not readable: only 63 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fai",
    1
   ],
   [
-   "not readable: page fetch failed (TimeoutError: The read operation timed out for <url> no suitable Wayback snapshot; archive lookup failed (Memento aggrega",
+   "not readable: only 115 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fa",
    1
   ],
   [
-   "not readable: only 52 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fai",
+   "not readable: only 80 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fai",
+   1
+  ],
+  [
+   "not readable: only 91 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fai",
+   1
+  ],
+  [
+   "not readable: page fetch failed (HTTP 403 for <url> Wayback failed (HTTP 429 for <url> archive lookup failed (Memento aggregator skipped after repeated fa",
+   1
+  ],
+  [
+   "not readable: only 132 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated fa",
    1
   ]
  ],
  "unreadable_samples": [
   {
-   "source": "FXStreet",
-   "title": "Gold Price Forecast: XAU/USD defends $4,000, but for how long?",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/api/json/20261111042619/https://www.fxstreet.com/analysis/gold-price-forecast-xau-usd-defends-4-000-but-for"
+   "source": "New Age BD",
+   "title": "Gold price drops by Tk 2,217 per bhari",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/api/json/20261112052500/https://www.newagebd.net/post/business-miscellany/322079/gold-price-drops-by-tk-221"
   },
   {
-   "source": "Quantum Commodity Intelligence",
-   "title": "Oil futures: Crude climbs as doubts creep in over US-Iran deal",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/api/json/20261111041529/https://www.qcintel.com/article/oil-futures-crude-climbs-as-doubts-creep-in-over-"
-  },
-  {
-   "source": "FXEmpire",
-   "title": "Gold and Silver Price Forecast: Higher Yields Put Rebound at Risk",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/api/json/20261111041126/https://www.fxempire.com/forecasts/article/gold-and-silver-price-forecast-higher-"
-  },
-  {
-   "source": "THISDAYLIVE",
-   "title": "Amid Decline in International Crude Oil Prices, FCCPC Moves to Enforce Pump Price Cuts",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (URLError: <urlopen error [Errno -2] Name or service not known> for https://timetravel.mementoweb.org/api/json/20261111041111/https://www.thisdaylive.com/2026/11/11/amid-decline-in-international-crude-oil-pr"
-  },
-  {
-   "source": "openPR.com",
-   "title": "PAX Gold Price Prediction: Gold Retakes $4,000 as Buyers Eye Pepeto Past the $11.3M Mark",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures); archive.today: robots.txt disallows"
-  },
-  {
-   "source": "FXStreet",
-   "title": "Silver Price Forecast: XAG/USD bears have the upper hand below $53.00 pivotal resistance",
+   "source": "WSJ",
+   "title": "Singapore Central Bank Rolls Out Gold-Vaulting Services to Boost Trading Hub",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures); archive.today: robots.txt disallows"
   },
   {
-   "source": "India TV News",
-   "title": "11 November, 2026 Stock Market Updates: Sensex surges 1,142 points, Nifty above 25,300 as crude pric",
-   "reason": "page fetch failed (HTTP 403 for https://www.indiatvnews.com/business/markets/9-november-2026-stock-market-updates-sensex-surges-1142-points-nifty-above-25-300-as-crude-prices-decline-bajaj-finance-icici-bank-gains-2026-11-11-1059139); no suitable Wayback snapshot; archive lookup failed (Memento aggr"
+   "source": "FXStreet",
+   "title": "Silver Price Forecast: XAG/USD flirts with trading range support, holds above $51.00",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXEmpire",
+   "title": "Gold (XAU/USD) Price Forecast: Bullish Reversal Faces Critical Support Test",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "TradingView",
+   "title": "Indian shares extend gains as lower crude oil, foreign inflows boost sentiment",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
    "source": "FXStreet",
-   "title": "Gold climbs to $4,050 as USD pauses hot CPI-led rally; Fed hike bets to cap upside",
+   "title": "Gold price in India: Rates on November 12",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Reuters",
-   "title": "Gold edges higher after sharp selloff, Fed hike bets weigh",
+   "source": "News18",
+   "title": "Amul And Mother Diary Announce Fresh Price Hike Across India | Gold Up \u20b94, Taaza \u20b92 Per Litre",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Economies.com",
-   "title": "Crude Oil Posts Cautious, Limited Gains \u2013 Analysis \u201311-11-2026",
-   "reason": "page fetch failed (HTTP 403 for https://www.economies.com/commodities/oil-analysis/crude-oil-posts-cautious,-limited-gains-%E2%80%93-analysis-%E2%80%9311-11-2026-133832); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
    "source": "Laodong.vn",
-   "title": "WGC assesses gold price outlook after deep drop",
+   "title": "Gold price today, November 12: Sharp reversal, pressure hinders upward momentum",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Laodong.vn",
-   "title": "Silver price fluctuations 11.11: Domestic silver prices fall sharply, continuing to face pressure",
+   "source": "Oil & Gas Middle East",
+   "title": "Brent down 21% as Saudi output jumps",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Petromindo",
+   "title": "Indonesia's October crude oil price rises to $117.24 per barrel",
+   "reason": "only 41 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXLeaders",
+   "title": "Gold Price Forecast: XAU/USD Tests $3,969 as Dollar Climbs Ahead of PPI",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXStreet",
+   "title": "Gold Price Forecast: XAU/USD remains a sell-on-rise trade amid steeper Fed hike bets",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Moomoo",
+   "title": "2027: A Major Shift in Crude Oil and Gold Markets \u2013 A Comprehensive Analysis of ING\u2019s Five Scenarios",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "www.marketscreener.com",
-   "title": "CICC Adjusts Laopu Gold's Price Target to HK$412.35",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+   "source": "FXEmpire",
+   "title": "Gold Price Forecast: Tests Support as Dollar Climbs",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Kalinga TV",
-   "title": "Gold price fall in Bhubaneswar today, November 12, 2026: Check 22K, 24K rates in major cities",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Reuters",
-   "title": "Indian stocks open higher on softer crude, robust foreign buying",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Shipping Telegraph",
-   "title": "COSCO Shipping Energy orders six LNG dual fuel (ready) VLCCs",
+   "source": "FXEmpire",
+   "title": "Natural Gas, WTI Oil, Brent Oil Forecasts \u2013 Oil Gains Ground As Iran Wants To Keep Nuclear Material ",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
@@ -165,9 +160,49 @@
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Kalkine",
-   "title": "Legacy Iron Ore Reports Half-Year Operations Across Gold, Iron and Base Metal Projects for September",
-   "reason": "page fetch failed (HTTP 403 for https://kalkine.com.au/news/announcements/legacy-iron-ore-reports-half-year-operations-across-gold-iron-and-base-metal-projects-for-september-2026); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+   "source": "Traders Union",
+   "title": "Pakistan gold prices fall with global bullion decline",
+   "reason": "page fetch failed (HTTP 403 for https://tradersunion.com/news/commodities/show/4206286-pakistan-gold-prices-fall-global/); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Kalinga TV",
+   "title": "Gold price fall in Bhubaneswar today, November 12, 2026: Check 22K, 24K rates in major cities",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "IndiaIPO",
+   "title": "Gold slips as strong US inflation data bolsters dollar, Fed hike expectations",
+   "reason": "page fetch failed (HTTP 429 for https://www.indiaipo.in/news/detail/gold-slips-as-strong-us-inflation-data-bolsters-dollar-fed-hike-expectations); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Laodong.vn",
+   "title": "Silver price fluctuations 12.11: Continue to fall deeply",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "News18",
+   "title": "ITC Hikes Gold Flake Cigarette Price By Rs 10 To Rs 135; Second Increase In 2026",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXEmpire",
+   "title": "Gold (XAUUSD), Silver, Platinum Forecasts \u2013 Gold Drops As Dollar Tests Yearly Highs",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "KuCoin",
+   "title": "WTI Crude Oil Falls for Fifth Consecutive Day Amid Stalled U.S.-Iran Talks and OPEC+ Output Increase",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Anadolu Ajans\u0131",
+   "title": "OPEC crude production rises by nearly 2 million bpd in October",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FOREX.com",
+   "title": "Gold under the pump as dollar sensitivity surges",
+   "reason": "page fetch failed (HTTP 403 for https://www.forex.com/en/news-and-analysis/gold-under-the-pump-as-dollar-sensitivity-surges/); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
    "source": "The Financial Express",
@@ -175,112 +210,78 @@
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "NDTV Profit",
-   "title": "Oil Prices Today: Brent Crude Holds Near $92 As US-Iran Tensions Ease",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Proactive Investors Australia",
-   "title": "Gold drops more than 2% as hotter US inflation lifts yields",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Finimize",
-   "title": "Palm Oil Bounced Back As Crude And Rival Oils Firmed",
+   "source": "NAI500",
+   "title": "BMO Warns Silver\u2019s Solar-Driven Bull Case Is Losing Steam",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Pluang",
-   "title": "Gold and silver prices drop sharply as stronger US inflation raises Fed rate hike odds.",
+   "source": "Bloomberg.com",
+   "title": "Gold Holds Below $4,000 as Market Looks Ahead to Fed Rate Hike",
+   "reason": "page fetch failed (HTTP 403 for https://www.bloomberg.com/news/articles/2026-11-12/gold-holds-below-4-000-as-market-looks-ahead-to-fed-rate-hike); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXStreet",
+   "title": "WTI declines as US, Iran avoids further escalation amid rising OPEC+ output",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "CME Group",
-   "title": "WTI Crude Oil futures hit cycle low as Mideast risk premiums ease.",
+   "source": "WSJ",
+   "title": "Gold Dims Amid Rising Fed Rate-Hike Expectations",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Australian Mining",
+   "source": "Shanghai Metals Market",
+   "title": "Base metals broadly rose, led by LME aluminum, with LME zinc, LME nickel, and SHFE aluminum strength",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "TradingView",
+   "title": "JAPAN OCT CGPI KEY ENERGY PRICES: CRUDE OIL/COAL PRODUCTS +15.9% VS. SEPT +11.5%",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "FXStreet",
+   "title": "Gold falls below $4,000 as Fed rate hike bets grow",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Investing.com India",
+   "title": "US oil and gas stocks rise as crude prices climb on Iran tensions By Investing.com",
+   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "Laodong.vn",
+   "title": "Gold price update morning of November 12: World gold recovers despite unfavorable factors",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "ABS-CBN",
+   "title": "World crude oil prices continue slide; LPG rollback seen",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "The Motley Fool",
+   "title": "Is the iShares Silver Trust a Buy After Falling Nearly 60% From Its High?",
+   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
+  },
+  {
+   "source": "https://megaproject.com/",
    "title": "Red Hill expands gold-copper ambitions in dual project deals",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Australian Mining",
+   "source": "https://megaproject.com/",
    "title": "Solstice strikes more high-grade copper-gold at Nanadie",
    "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   },
   {
-   "source": "Laodong.vn",
-   "title": "Gold price update morning of November 11: Decline, persistent pressure",
-   "reason": "page fetch failed (URLError: <urlopen error [Errno 111] Connection refused> for https://news.laodong.vn/kinh-doanh/cap-nhat-gia-vang-sang-1111-sut-giam-ap-luc-dai-dang-1798274.ldo); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "EnergyNow",
-   "title": "Canada Sees Scope for France LNG Partnership, Minister Says",
-   "reason": "page fetch failed (HTTP 403 for https://energynow.ca/2026/09/canada-sees-scope-for-france-lng-partnership-minister-says/); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Yahoo! Finance Canada",
-   "title": "WisdomTree WTI Crude Oil 3x Daily Leveraged ETN (3OIL.L) Seasonal Returns Chart",
-   "reason": "only 41 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Bloomberg.com",
-   "title": "Barrick Mining Files to Take North American Gold Assets Public",
-   "reason": "page fetch failed (HTTP 403 for https://www.bloomberg.com/news/articles/2026-11-10/barrick-mining-files-to-take-north-american-gold-assets-public); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "EnergyNow",
-   "title": "Citi Raises Brent Forecast for 2026; Sees $150 Oil if Hormuz Disruption Persists",
-   "reason": "page fetch failed (HTTP 403 for https://energynow.ca/2026/04/citi-raises-brent-forecast-for-2026-sees-150-oil-if-hormuz-disruption-persists/); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Natural Gas Intelligence",
-   "title": "Bulls on Parade: Physical Natural Gas Prices March Higher",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "The Times of India",
-   "title": "Silver Rate Today in Kanpur \u2013 Silver Price per Gram & Kg | 11 November 2026",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Bloomberg.com",
-   "title": "Strathcona, CN to Partner on Crude-by-Rail Project to BC",
-   "reason": "page fetch failed (HTTP 403 for https://www.bloomberg.com/news/articles/2026-11-10/strathcona-cn-to-partner-on-crude-by-rail-project-to-north-bc); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Natural Gas Intelligence",
-   "title": "Short-Covering Rally Extends Winning Ways for Natural Gas Futures",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "marketscreener.com",
-   "title": "December WTI Crude Oil Contract Closes Down $0.81, or 0.9%; Settles at $86.04 per Barrel. January Br",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Stockhead",
-   "title": "Beyond uranium: Namibia\u2019s next mining chapter could be copper and gold",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "Natural Gas Intelligence",
-   "title": "More Natural Gas, Less Cold Send EIA Winter Price Forecast Tumbling",
-   "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
-   "source": "The Times of India",
-   "title": "Amid cracker blitz, absence of DJ music silver lining this year",
-   "reason": "only 0 characters of text (minimum 150); no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
-  },
-  {
    "source": "WSJ",
-   "title": "Comex Gold Settles 2.05% Lower at $4020.70",
+   "title": "U.S. Natural Gas Futures Settle Lower After Gains",
    "reason": "robots.txt disallows automated access; no suitable Wayback snapshot; archive lookup failed (Memento aggregator skipped after repeated failures)"
   }
  ],
  "headline_search_errors": [
+  "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
   "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
   "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
   "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more informati",
