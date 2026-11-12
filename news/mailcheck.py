@@ -44,6 +44,26 @@ def main() -> int:
             print(f"{s['name']}: {len(ids)} email(s) in the last 7 days from {label} '{needle}'")
             if ids and label == "configured sender":
                 break
+        if ids:
+            msg = email.message_from_bytes(M.fetch(ids[-1], "(RFC822)")[1][0][1], policy=email.policy.default)
+            from bs4 import BeautifulSoup
+            import re, urllib.parse, urllib.request
+            soup = BeautifulSoup(_html_of(msg), "html.parser")
+            for t in soup(["script", "style"]):
+                t.decompose()
+            text = re.sub(r"\s+", " ", soup.get_text(" ")).strip()
+            print(f"  LATEST EMAIL: {len(text)} chars of text, {len(soup.find_all('a', href=True))} links, {len(soup.find_all('p'))} <p>, {len(soup.find_all('table'))} tables")
+            print("  TEXT START:", text[:1500])
+            for a in soup.find_all("a", href=True)[:25]:
+                h = a["href"]
+                host = urllib.parse.urlparse(h).netloc
+                err = ""
+                try:
+                    r = urllib.request.urlopen(urllib.request.Request(h, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/124.0 Safari/537.36"}), timeout=15)
+                    final = urllib.parse.urlparse(r.geturl()).netloc + urllib.parse.urlparse(r.geturl()).path[:50]
+                except Exception as e:  # noqa: BLE001
+                    final, err = "", f"{type(e).__name__} {str(e)[:60]}"
+                print(f"   LINK text='{re.sub(chr(10), ' ', a.get_text(' ')).strip()[:50]}' host={host} -> {final or err}")
         for mid in ids[-3:]:
             typ, md = M.fetch(mid, "(RFC822)")
             msg = email.message_from_bytes(md[0][1], policy=email.policy.default)
