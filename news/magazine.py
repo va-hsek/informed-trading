@@ -371,7 +371,7 @@ footer.foot{margin:2.5rem 0 2.5rem;padding-top:1rem;border-top:3px double var(--
 .totop{position:fixed;right:14px;bottom:16px;z-index:30;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;text-decoration:none;font:700 1.2rem var(--sans);box-shadow:0 2px 10px #0004;opacity:.88}
 @media(max-width:560px){.kick{display:none}}
 @media(min-width:900px){body{font-size:1.08rem}.wrap{max-width:900px}}
-@media print{nav.bar,.ctl,.totop{display:none}summary:before{display:none}details.block{margin:.4rem 0}details.sub{margin:.4rem 0 .4rem .3rem}details.st{margin-left:.3rem}.related{margin-left:.2rem}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
+@media print{nav.bar,.ctl,.totop{display:none}details.st[open],.related details.st,.related details.st[open]{background:none}details.sub{background:color-mix(in srgb,var(--accent,#888) 4%,#fff)}details.block[open]>summary,details.sub[open]>summary{background:none}summary:before{display:none}details.block{margin:.4rem 0}details.sub{margin:.4rem 0 .4rem .3rem}details.st{margin-left:.3rem}.related{margin-left:.2rem}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
 """
 
 JS = ("function openTo(el){for(var n=el;n;n=n.parentElement){if(n.tagName==='DETAILS')n.open=true;}}"
