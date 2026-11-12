@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T05:37:27.325110+00:00",
+ "at": "2026-11-12T11:29:39.047788+00:00",
  "results": [
   {
    "test": "model key",
@@ -9,7 +9,7 @@
   {
    "test": "model: plain call",
    "ok": true,
-   "detail": "4.5s, reply: '{\"ok\": true}'"
+   "detail": "4.9s, reply: '{\"ok\": true}'"
   },
   {
    "test": "model: JSON mode",
@@ -24,32 +24,32 @@
   {
    "test": "fetch: BBC business feed",
    "ok": true,
-   "detail": "41,350 bytes in 0.3s"
+   "detail": "40,521 bytes in 0.3s"
   },
   {
    "test": "fetch: Economic Times feed",
    "ok": true,
-   "detail": "33,374 bytes in 0.3s"
+   "detail": "36,144 bytes in 0.1s"
   },
   {
    "test": "fetch: Mint feed",
    "ok": true,
-   "detail": "37,864 bytes in 0.2s"
+   "detail": "40,257 bytes in 0.1s"
   },
   {
    "test": "fetch: Moneycontrol feed",
    "ok": true,
-   "detail": "16,296 bytes in 0.4s"
+   "detail": "16,296 bytes in 0.0s"
   },
   {
    "test": "fetch: RBI press releases",
    "ok": true,
-   "detail": "132,071 bytes in 1.0s"
+   "detail": "89,768 bytes in 0.3s"
   },
   {
    "test": "fetch: Wayback availability API",
    "ok": true,
-   "detail": "193 bytes in 0.2s"
+   "detail": "43 bytes in 5.3s"
   },
   {
    "test": "fetch: Memento aggregator",
@@ -64,7 +64,7 @@
   {
    "test": "fetch: Google News RSS",
    "ok": true,
-   "detail": "176,102 bytes in 0.5s"
+   "detail": "173,444 bytes in 0.4s"
   }
  ]
 }
