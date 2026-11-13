@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T12:07:39.236675+00:00",
+ "at": "2026-11-13T04:54:27.281584+00:00",
  "results": [
   {
    "test": "model key",
@@ -8,13 +8,13 @@
   },
   {
    "test": "model: plain call",
-   "ok": false,
-   "detail": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded fo"
+   "ok": true,
+   "detail": "2.7s, reply: '{\"ok\": true}'"
   },
   {
    "test": "model: JSON mode",
-   "ok": false,
-   "detail": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded fo"
+   "ok": true,
+   "detail": "3.3s, reply: '{\\n  \"claims\": []\\n}'"
   },
   {
    "test": "model: web search",
@@ -24,32 +24,32 @@
   {
    "test": "fetch: BBC business feed",
    "ok": true,
-   "detail": "40,521 bytes in 0.2s"
+   "detail": "42,687 bytes in 0.1s"
   },
   {
    "test": "fetch: Economic Times feed",
    "ok": true,
-   "detail": "36,579 bytes in 0.2s"
+   "detail": "35,665 bytes in 0.1s"
   },
   {
    "test": "fetch: Mint feed",
    "ok": true,
-   "detail": "40,705 bytes in 0.2s"
+   "detail": "37,948 bytes in 0.2s"
   },
   {
    "test": "fetch: Moneycontrol feed",
    "ok": true,
-   "detail": "16,296 bytes in 0.4s"
+   "detail": "16,296 bytes in 0.7s"
   },
   {
    "test": "fetch: RBI press releases",
    "ok": true,
-   "detail": "89,768 bytes in 1.2s"
+   "detail": "87,405 bytes in 1.1s"
   },
   {
    "test": "fetch: Wayback availability API",
    "ok": true,
-   "detail": "193 bytes in 0.5s"
+   "detail": "193 bytes in 0.4s"
   },
   {
    "test": "fetch: Memento aggregator",
@@ -64,7 +64,7 @@
   {
    "test": "fetch: Google News RSS",
    "ok": true,
-   "detail": "171,155 bytes in 0.5s"
+   "detail": "172,793 bytes in 0.5s"
   }
  ]
 }

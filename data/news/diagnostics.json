@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-12T17:37:39.420464+05:30",
+ "generated": "2026-11-13T10:24:27.473400+05:30",
  "provider": null,
  "model": null,
  "llm_preflight_error": "FetchError: model API call failed: HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/g",
@@ -20,5 +20,6 @@
  "unreadable_samples": [],
  "headline_search_errors": [],
  "free_search_errors": [],
- "feed_failures": []
+ "feed_failures": [],
+ "llm_use": null
 }
