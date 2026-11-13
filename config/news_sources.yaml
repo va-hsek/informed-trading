@@ -290,3 +290,15 @@ importance:
     - sensex
     - rupee
     - mcx
+
+# ---- Market tiles at the top of the page, free, from Stooq daily closes (no Alice Blue needed). A symbol that fails just gets no tile. ----
+# The action report's dashboard (data/dashboard_latest.json), when present and fresh, takes priority over these.
+markets:
+  - {label: "WTI crude",  symbol: "cl.f",   prefix: "$"}
+  - {label: "Gold",       symbol: "gc.f",   prefix: "$"}
+  - {label: "Silver",     symbol: "si.f",   prefix: "$"}
+  - {label: "Natural gas", symbol: "ng.f",  prefix: "$"}
+  - {label: "Copper",     symbol: "hg.f",   prefix: "$"}
+  - {label: "USD/INR",    symbol: "usdinr", decimals: 2}
+  - {label: "Nifty 50",   symbol: "^nsei",  decimals: 0}
+  - {label: "S&P 500",    symbol: "^spx",   decimals: 0}

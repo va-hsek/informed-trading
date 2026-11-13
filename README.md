@@ -103,3 +103,12 @@ is estimated at **$0.8-1.8, about Rs 70-160** (at `llm.usd_inr`), so about Rs 2,
 
 ## What arrives in your email
 Both the PDF (for the phone) and the HTML page (open it in a browser to expand and fold). Put several addresses in `EMAIL_TO`, separated by commas; they are sent as Bcc.
+
+
+## Ranking, flags and extras (no extra model cost)
+- **Today in X** is ranked by what a storyline is about (config `importance:`: rates, crude, gold, data, geopolitics, your watchlist), how many outlets carry it and official confirmation. Price lists, tips and live blogs are demoted, and at most 2 per subject. Each shows a "Why here" line and whether it is new today or still running from yesterday. Everything else stays in the sections below.
+- **On your list** groups stories by the words in `importance.watchlist`. **Figures differ** flags different numbers for the same measure from different outlets (check before relying). **Terms** explains jargon under a story. **Numbers of the day** quotes one verified figure per leading story.
+- **Page tools:** search, text size, and stories you opened are dimmed next time (stored only in your browser for 7 days).
+- **Official sources:** Fed, ECB, Bank of England, BIS (direct feeds); IMF, World Bank, OECD, OPEC, IEA, BoJ, PBoC, Basel Committee, SEBI (through Google News on the institution's own site). Add more under `feeds:` with `category: official`.
+- **Market tiles** come from Stooq daily closes (`markets:` in the config) unless the action report's dashboard is present. A symbol that fails gets no tile; see `markets_errors` in `data/news/diagnostics.json`.
+- `data/news/source_health.json` keeps the last 14 runs per feed; `chronic_feed_failures` in the diagnostics lists feeds that failed every one of their last 5 runs.

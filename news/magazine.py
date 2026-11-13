@@ -480,7 +480,7 @@ def _first_sentence(st: Story) -> str:
 
 
 def render_magazine(now: datetime, stories: list[Story], unread: list, stats: dict, coverage: list, reasons: list, llm_note: str, llm_error: str,
-                    llm, cal_note: str, cal: dict, cfg: dict, archive, prev_heads: Optional[list] = None, **_ignored) -> str:
+                    llm, cal_note: str, cal: dict, cfg: dict, archive, prev_heads: Optional[list] = None, market_rows: Optional[list] = None, **_ignored) -> str:
     lim = cfg["limits"]
     sector_order = list((cfg.get("sectors") or {}).keys())
     upd_groups, used = event_updates(stories, cal, now)
@@ -500,6 +500,8 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
                  '<div class="tools"><input id="q" type="search" placeholder="Search this edition (e.g. crude, RBI, Nvidia)" aria-label="Search"><div class="note" id="qn"></div></div>')
 
     rows, gnote = load_glance(ROOT_DASH(cfg), now)
+    if not rows and market_rows:
+        rows, gnote = market_rows, "Free public daily closes (Stooq), not live prices; each tile shows its own as-of date."
     parts.append(markets_html(rows, gnote))
 
     prev = list(prev_heads or [])

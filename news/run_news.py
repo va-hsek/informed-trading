@@ -31,6 +31,7 @@ from news.gnews_search import find_alternative_gnews
 from news.newsletter import fetch_newsletters
 from news.llm import LLM, make_llm
 from news.magazine import render_magazine
+from news.markets import fetch_markets
 from news.paper import (SECTIONS, Para, Source, Story, item_score, merge_stories, render_calendar, render_glance, render_story,
                         section_for)
 
@@ -83,6 +84,33 @@ def _archive(it) -> str:
     return "https://archive.ph/newest/" + it.origin_url if (it.paywalled and it.origin_url) else ""
 
 
+def _markets(cfg: dict, now: datetime, http_get: Callable) -> tuple[list, list]:
+    try:
+        return fetch_markets(cfg.get("markets") or [], now, http_get)
+    except Exception as e:  # noqa: BLE001                         # tiles are a nicety: never let them stop the edition
+        return [], [f"markets: {type(e).__name__}"]
+
+
+def update_source_health(nd: Path, coverage: list, now: datetime, keep: int = 14, min_runs: int = 5) -> list[str]:
+    """Rolling record of which feeds answered; returns feeds that failed in every one of their last `min_runs`+ runs (candidates to fix or drop)."""
+    path = nd / "source_health.json"
+    try:
+        hist = json.loads(path.read_text())
+    except (OSError, ValueError):
+        hist = {}
+    day = f"{now.astimezone(IST):%Y-%m-%d}"
+    for c in coverage:
+        h = hist.setdefault(c["feed"], [])
+        if h and h[-1][0] == day:
+            h[-1] = [day, bool(c["ok"])]                              # a re-run on the same day replaces that day's entry
+        else:
+            h.append([day, bool(c["ok"])])
+        del h[:-keep]
+    nd.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(hist, indent=0))
+    return sorted(f for f, h in hist.items() if len(h) >= min_runs and not any(ok for _, ok in h[-min_runs:]))
+
+
 def _day(iso: str) -> str:
     try:
         return datetime.fromisoformat(iso).astimezone(IST).strftime("%Y-%m-%d")
@@ -117,6 +145,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     now_utc = now.astimezone(timezone.utc)
     win_start = edition_window(now_utc, lim.get("edition_anchor_ist", "05:30"), float(lim.get("window_hours", 24)))
     prev_heads = load_prev_headlines(root / "data" / "news", now)
+    market_rows, market_errors = _markets(cfg, now, http_get)
     items, coverage = collect_items(cfg["feeds"], now_utc, http_get, win_start, lim["max_items_per_feed"])
     nl_items, nl_cov = fetch_newsletters(cfg.get("newsletters") or [], secrets, now_utc, win_start)
     have = {norm_title(i.title) for i in items} | {i.link for i in items}
@@ -339,13 +368,13 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
     meta["diagnostics"] = {"generated": now.isoformat(), "provider": getattr(llm, "provider", None), "model": getattr(llm, "model", None),
                            "llm_preflight_error": llm_error, "stats": stats,
                            "top_failure_reasons": reasons.most_common(15), "unreadable_samples": samples,
-                           "headline_search_errors": [_reason_key(x) for x in search_errors[:10]], "free_search_errors": [_reason_key(x) for x in free_errors[:10]],
+                           "markets_ok": len(market_rows), "markets_errors": market_errors[:10], "headline_search_errors": [_reason_key(x) for x in search_errors[:10]], "free_search_errors": [_reason_key(x) for x in free_errors[:10]],
                            "feed_failures": [{"feed": c["feed"], "reason": c["reason"][:160]} for c in coverage if not c["ok"]],
                            "llm_use": ({"tokens_in": llm.tokens_in, "tokens_out": llm.tokens_out, "searches": getattr(llm, "search_count", 0),
                                         "est_cost_usd": round(llm.est_cost_usd(), 4),
                                         "est_cost_inr": round(llm.est_cost_usd() * float((cfg.get("llm") or {}).get("usd_inr", 0) or 0), 1)} if llm is not None else None)}
     meta["mag"] = {"now": now, "stories": stories, "unread": hl, "stats": stats, "coverage": coverage, "reasons": reasons.most_common(12),
-                   "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg, "prev_heads": prev_heads,
+                   "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg, "prev_heads": prev_heads, "market_rows": market_rows,
                    "archive": _archive}
     return "\n".join(L) + "\n", meta
 
@@ -367,6 +396,7 @@ def main(argv=None) -> int:
     nd = ROOT / "data" / "news"
     nd.mkdir(parents=True, exist_ok=True)
     rotate_latest(nd, now)
+    meta["diagnostics"]["chronic_feed_failures"] = update_source_health(nd, coverage, now)
     (nd / "latest.json").write_text(json.dumps(meta["latest"], indent=1))
     (nd / "diagnostics.json").write_text(json.dumps(meta["diagnostics"], indent=1, default=str))
     print(f"wrote reports/{stem}.html  ({meta['stories']} stories, {meta['sources']} sources, {meta['stats']['claims_kept']} claims)")

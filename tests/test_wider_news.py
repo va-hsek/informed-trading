@@ -685,3 +685,35 @@ def test_glossary_numbers_of_the_day_and_page_tools():
         st.paras[0].claims[:] = [claim]
     html = _render(stories)
     assert "<b>Terms:</b>" in html and "Numbers of the day" in html and 'id="q"' in html and "data-font" in html and "me-read" in html
+
+
+def test_market_tiles_fail_closed_and_show_their_own_date():
+    from news.markets import fetch_markets, parse_closes
+    csv_ok = "Date,Open,High,Low,Close,Volume\n2026-11-11,90,92,89,90.0,1\n2026-11-12,91,93,90,92.7,1\n"
+    now = datetime(2026, 11, 13, 6, 0, tzinfo=timezone.utc)
+    def get(url, *a, **k):
+        if "cl.f" in url: return csv_ok.encode()
+        if "gc.f" in url: return b"Exceeded the daily hits limit"
+        if "si.f" in url: return b"Date,Open,High,Low,Close,Volume\n2026-10-01,1,1,1,30,1\n2026-10-02,1,1,1,31,1\n"
+        raise OSError("boom")
+    rows, errs = fetch_markets([{"label": "WTI", "symbol": "cl.f", "prefix": "$"}, {"label": "Gold", "symbol": "gc.f"}, {"label": "Silver", "symbol": "si.f"}, {"label": "Gas", "symbol": "ng.f"}], now, get)
+    assert [r["label"] for r in rows] == ["WTI"] and rows[0]["value_text"] == "$92.70" and rows[0]["chg_text"] == "+3.00%" and rows[0]["as_of"] == "close 12 Nov"
+    assert len(errs) == 3 and any("stale" in e for e in errs) and parse_closes("nonsense") == []
+    from news.magazine import render_magazine
+    import yaml
+    cfg = yaml.safe_load(open(ROOT_CFG))
+    stats = dict(read_direct=1, read_wayback=0, read_archive=0, read_search=0, read_partial=0, read_summary=0, unreadable=0, cost_stopped=0, extract_errors=0, claims_kept=1, claims_dropped=0)
+    html = render_magazine(now, [_mini_story("Brent crude falls on Iran talks hopes", ["Mint"])], [], stats, [], [], "", "", None, "", {"last_reviewed": "2026-11-13", "events": []}, cfg, lambda it: "", market_rows=rows)
+    assert 'id="markets"' in html and "$92.70" in html and "Stooq" in html
+
+
+def test_source_health_flags_feeds_that_keep_failing(tmp_path):
+    from news.run_news import update_source_health
+    ist = timezone(timedelta(hours=5, minutes=30))
+    flagged = []
+    for d in range(1, 7):
+        now = datetime(2026, 11, d, 5, 40, tzinfo=ist)
+        flagged = update_source_health(tmp_path, [{"feed": "Dead feed", "ok": False}, {"feed": "Good feed", "ok": True}, {"feed": "Flaky", "ok": d % 2 == 0}], now)
+    assert flagged == ["Dead feed"]
+    update_source_health(tmp_path, [{"feed": "Dead feed", "ok": True}], datetime(2026, 11, 7, 5, 40, tzinfo=ist))
+    assert update_source_health(tmp_path, [{"feed": "Dead feed", "ok": True}], datetime(2026, 11, 7, 6, 0, tzinfo=ist)) == []
