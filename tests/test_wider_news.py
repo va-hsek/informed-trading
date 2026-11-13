@@ -674,3 +674,14 @@ def test_official_feeds_added_and_config_parses():
     names = {f["name"] for f in cfg["feeds"]}
     assert {"ECB press", "Bank of England news", "BIS media releases", "Fed monetary policy", "IMF", "Basel Committee (BCBS)", "OPEC", "SEBI"} <= names
     assert all(f["category"] == "official" for f in cfg["feeds"] if f["name"] in ("IMF", "OECD", "IEA", "BIS media releases"))
+
+
+def test_glossary_numbers_of_the_day_and_page_tools():
+    from news.glossary import terms_in
+    assert [t for t, _ in terms_in("Bank Nifty rises as repo rate cut hopes lift yields")][:2] == ["bank nifty", "repo rate"]
+    stories = [_mini_story("RBI holds repo rate steady as inflation cools", ["Mint", "BBC"]), _mini_story("Brent crude falls on Iran talks hopes", ["Reuters", "BS"]),
+               _mini_story("Fed official flags rate hike risk as inflation sticks", ["CNBC", "ET"])]
+    for st, claim in zip(stories, ["The repo rate stays at 5.5% after the meeting.", "Brent crude fell 2.1% to $91.80 a barrel on Wednesday.", "Inflation was 3.4% in the latest reading, the Fed official said."]):
+        st.paras[0].claims[:] = [claim]
+    html = _render(stories)
+    assert "<b>Terms:</b>" in html and "Numbers of the day" in html and 'id="q"' in html and "data-font" in html and "me-read" in html

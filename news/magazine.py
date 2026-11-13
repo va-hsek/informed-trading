@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Optional
 
 from news.cluster import Cluster, by_commodity, by_region, by_sector, cluster, is_commodity
-from news.figures import disagreements
+from news.figures import disagreements, figures
+from news.glossary import terms_in
 from news.headline_search import sig_words
 from news.importance import Importance, Rating, pick_top
 from news.paper import IST, Source, Story
@@ -109,6 +110,15 @@ def _by(st: Story) -> str:
 
 
 # ---------------------------------------------------------------- foldable units
+def _terms(st: Story) -> str:
+    """A short 'Terms' note: plain-English meanings of jargon this story uses (fixed dictionary, no model)."""
+    text = st.headline + " " + " ".join(cl for p in st.paras for cl in p.claims)
+    found = terms_in(text)
+    if not found:
+        return ""
+    return '<p class="terms"><b>Terms:</b> ' + " ".join(f"<span><i>{esc(t)}</i>: {esc(d)}</span>" for t, d in found) + "</p>"
+
+
 def story_details(st: Story, sid: str = "", show_region: bool = True, open_: bool = False, related: Optional[list] = None, why: str = "", flag: str = "") -> str:
     """One story: the headline is the whole closed state. Opened, it shows the verified paragraphs and, for a storyline, the related stories (each foldable)."""
     badge = f' <span class="badge">+{len(related)} related</span>' if related else ""
@@ -118,7 +128,7 @@ def story_details(st: Story, sid: str = "", show_region: bool = True, open_: boo
     id_attr = f' id="{esc(sid, quote=True)}"' if sid else ""
     return (f'<details class="st{" line" if related else ""}"{id_attr}{" open" if open_ else ""}>'
             f'<summary><span class="ht">{esc(st.headline)}</span><span class="meta">{_meta(st, show_region)}{badge}</span>{f"<span class=why>Why here: {esc(why)}</span>" if why else ""}</summary>'
-            f'<div class="body"><div class="by">{_by(st)}</div>{flag}{paras_html(st)}{rel}</div></details>')
+            f'<div class="body"><div class="by">{_by(st)}</div>{flag}{paras_html(st)}{_terms(st)}{rel}</div></details>')
 
 
 def figures_flag(c: Cluster) -> str:
@@ -377,6 +387,10 @@ details.st[open]{background:color-mix(in srgb,var(--accent,#888) 6%,var(--card))
 details.st[open]>summary{font-weight:inherit;border-bottom:1px dotted var(--rule)}
 details.st>summary{padding:.65rem .1rem;min-height:46px}
 .ht{display:block;font:700 1.02rem/1.28 var(--serif);overflow:hidden}
+.terms{margin:.5rem 0 0;font:400 .78rem/1.5 var(--sans);color:var(--mute);border-top:1px dotted var(--rule);padding-top:.4rem}.terms span{display:block;margin-top:.15rem}.terms i{font-style:normal;font-weight:700;color:var(--ink)}
+.nums{list-style:none;margin:0;padding:0}.nums li{padding:.45rem 0;border-top:1px solid var(--rule);font:400 .85rem/1.4 var(--sans)}.nums li:first-child{border-top:0}.nums b{font:800 1rem var(--sans);color:var(--red);margin-right:.3rem}.nums em{color:var(--mute);font-size:.7rem;font-style:normal;margin-left:.3rem}
+.tools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.5rem 0}.tools input{flex:1 1 11rem;min-width:0;font:500 .9rem var(--sans);padding:.55rem .8rem;border-radius:99px;border:1px solid var(--rule);background:var(--card);color:var(--ink)}
+.tools .note{font:500 .72rem var(--sans);color:var(--mute);flex:0 0 100%}details.st.isread>summary .ht{opacity:.55}details.st.isread>summary .ht:after{content:" ✓";color:#2b8a3e}
 .figdiff{margin:.5rem 0;padding:.5rem .7rem;border-left:4px solid #f59f00;background:color-mix(in srgb,#f59f00 12%,var(--card));font:500 .8rem/1.45 var(--sans);border-radius:0 6px 6px 0}.figdiff ul{margin:.3rem 0 0 1rem;padding:0}.figdiff .vs{color:var(--mute);font-style:italic}
 .why{display:block;font:500 .66rem var(--sans);letter-spacing:.02em;color:var(--mute);margin-top:.1rem}
 .meta{display:block;font:500 .7rem var(--sans);color:var(--mute);margin-top:.15rem;overflow:hidden}
@@ -399,17 +413,50 @@ footer.foot{margin:2.5rem 0 2.5rem;padding-top:1rem;border-top:3px double var(--
 .totop{position:fixed;right:14px;bottom:16px;z-index:30;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;text-decoration:none;font:700 1.2rem var(--sans);box-shadow:0 2px 10px #0004;opacity:.88}
 @media(max-width:560px){.kick{display:none}}
 @media(min-width:900px){body{font-size:1.08rem}.wrap{max-width:900px}}
-@media print{nav.bar,.ctl,.totop{display:none}details.st[open],.related details.st,.related details.st[open]{background:none}details.sub{background:color-mix(in srgb,var(--accent,#888) 4%,#fff)}details.block[open]>summary,details.sub[open]>summary{background:none}summary:before{display:none}details.block{margin:.4rem 0}details.sub{margin:.4rem 0 .4rem .3rem}details.st{margin-left:.3rem}.related{margin-left:.2rem}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
+@media print{nav.bar,.ctl,.tools,.totop{display:none}details.st[open],.related details.st,.related details.st[open]{background:none}details.sub{background:color-mix(in srgb,var(--accent,#888) 4%,#fff)}details.block[open]>summary,details.sub[open]>summary{background:none}summary:before{display:none}details.block{margin:.4rem 0}details.sub{margin:.4rem 0 .4rem .3rem}details.st{margin-left:.3rem}.related{margin-left:.2rem}.body,.five,details{break-inside:auto}h2,.ft,.ht{break-after:avoid}body{font-size:.9rem}details.st>.body{padding-left:.2rem}}
 """
 
 JS = ("function openTo(el){for(var n=el;n;n=n.parentElement){if(n.tagName==='DETAILS')n.open=true;}}"
+      "function sk(){try{return JSON.parse(localStorage.getItem('me-read')||'{}')}catch(e){return {}}}"
+      "function sv(o){try{localStorage.setItem('me-read',JSON.stringify(o))}catch(e){}}"
+      "function hk(t){var h=0;for(var i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))|0}return String(h)}"
+      "var R=sk(),D=new Date().toISOString().slice(0,10);"
+      "document.querySelectorAll('details.st').forEach(function(d){var h=d.querySelector('.ht');if(h&&R[hk(h.textContent)])d.classList.add('isread');});"
+      "document.addEventListener('toggle',function(e){var d=e.target;if(d.tagName==='DETAILS'&&d.classList.contains('st')&&d.open){var h=d.querySelector('.ht');if(h){R[hk(h.textContent)]=D;"
+      "var c=Date.parse(D)-6048e5;for(var k in R){if(Date.parse(R[k])<c)delete R[k]}sv(R);d.classList.add('isread');}}},true);"
+      "var fs=parseFloat((function(){try{return localStorage.getItem('me-font')}catch(e){return null}})())||1;document.documentElement.style.fontSize=(fs*100)+'%';"
       "document.addEventListener('click',function(e){var a=e.target.closest('a[href^=\"#\"]');if(a&&a.hash.length>1){var t=document.getElementById(a.hash.slice(1));"
       "if(t){openTo(t);setTimeout(function(){t.scrollIntoView({behavior:'smooth',block:'start'})},30);e.preventDefault();}return;}"
-      "var b=e.target.closest('button[data-all]');if(b){var o=b.getAttribute('data-all')==='open';document.querySelectorAll('details').forEach(function(d){d.open=o;});}});")
+      "var f=e.target.closest('button[data-font]');if(f){fs=Math.min(1.5,Math.max(.8,fs+.1*parseInt(f.getAttribute('data-font'))));document.documentElement.style.fontSize=(fs*100)+'%';try{localStorage.setItem('me-font',String(fs))}catch(x){}return;}"
+      "var b=e.target.closest('button[data-all]');if(b){var o=b.getAttribute('data-all')==='open';document.querySelectorAll('details').forEach(function(d){d.open=o;});}});"
+      "var q=document.getElementById('q');if(q){q.addEventListener('input',function(){var v=q.value.trim().toLowerCase(),n=0,st=document.querySelectorAll('details.st');"
+      "st.forEach(function(d){d.style.display='';});"
+      "if(v.length<2){document.getElementById('qn').textContent='';return;}"
+      "st.forEach(function(d){var own=(d.querySelector('summary')||{}).textContent+' '+((d.querySelector('.body')||{}).textContent||'');if(own.toLowerCase().indexOf(v)>-1){n++;openTo(d.parentElement);}else{d.style.display='none';}});"
+      "document.getElementById('qn').textContent=n+' stories match';});}")
 
 
 def outlets(c: Cluster) -> int:
     return len({x.name for st in c.stories for x in st.sources})
+
+
+def numbers_of_the_day(top: list, limit: int = 6) -> str:
+    """One verified figure per leading story, shown with the claim it came from and the outlet. Nothing is computed or rephrased."""
+    chips, seen = [], set()
+    for c, _ in top:
+        for st in [c.lead]:
+            for p in st.paras:
+                for cl in p.claims[:2]:
+                    fg = [f for f in figures(cl, p.source.name) if f.anchors]
+                    if fg and (c.lead.headline not in seen):
+                        seen.add(c.lead.headline)
+                        chips.append(f'<li><b>{esc(fg[0].shown)}</b> <span>{esc(_short(cl, 110))}</span> <em>{esc(p.source.name)}</em></li>')
+                        break
+                if c.lead.headline in seen:
+                    break
+        if len(chips) >= limit:
+            break
+    return '<ul class="nums">' + "".join(chips) + "</ul>" if len(chips) >= 2 else ""
 
 
 def seen_yesterday(headline: str, prev_heads: list[str]) -> bool:
@@ -449,7 +496,8 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     parts: list[str] = []
     if llm_note:
         parts.append(f'<div class="alert"><strong>Read this first.</strong> {esc(llm_note)}</div>')
-    parts.append('<div class="ctl"><button data-all="open">Expand all</button><button data-all="close">Collapse all</button></div>')
+    parts.append('<div class="ctl"><button data-all="open">Expand all</button><button data-all="close">Collapse all</button><button data-font="-1" aria-label="Smaller text">A−</button><button data-font="1" aria-label="Larger text">A+</button></div>'
+                 '<div class="tools"><input id="q" type="search" placeholder="Search this edition (e.g. crude, RBI, Nvidia)" aria-label="Search"><div class="note" id="qn"></div></div>')
 
     rows, gnote = load_glance(ROOT_DASH(cfg), now)
     parts.append(markets_html(rows, gnote))
@@ -459,6 +507,7 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     if top:
         trend = f" {sum(fresh)} new today, {len(fresh) - sum(fresh)} still running from yesterday." if prev else ""
         parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">What matters most this morning, judged by subject (rates, oil, gold, data, your watchlist), how many outlets carry it and whether an official source confirms it. The rest is in the sections below. Tap a headline to read it.{trend}</p>'
+                     + (f'<details class="sub numsbox" id="nums" style="--accent:#e67700"><summary><span class="ft">Numbers of the day</span><span class=count>{numbers_of_the_day(top).count("<li>")}</span></summary><div class="inner">{numbers_of_the_day(top)}</div></details>' if numbers_of_the_day(top) else "")
                      + "".join(cluster_details(c, f"top-{i}", why=" · ".join(([("new today" if fresh[i] else "still running from yesterday")] if prev else []) + r.why)) for i, (c, r) in enumerate(top)) + "</section>")
     elif not llm_note:
         parts.append('<div class="alert">No story could be built from the sources in this window.</div>')
