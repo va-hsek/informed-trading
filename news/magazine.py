@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Optional
 
 from news.cluster import Cluster, by_commodity, by_region, by_sector, cluster, is_commodity
+from news.figures import disagreements
+from news.headline_search import sig_words
 from news.importance import Importance, Rating, pick_top
 from news.paper import IST, Source, Story
 
@@ -107,7 +109,7 @@ def _by(st: Story) -> str:
 
 
 # ---------------------------------------------------------------- foldable units
-def story_details(st: Story, sid: str = "", show_region: bool = True, open_: bool = False, related: Optional[list] = None, why: str = "") -> str:
+def story_details(st: Story, sid: str = "", show_region: bool = True, open_: bool = False, related: Optional[list] = None, why: str = "", flag: str = "") -> str:
     """One story: the headline is the whole closed state. Opened, it shows the verified paragraphs and, for a storyline, the related stories (each foldable)."""
     badge = f' <span class="badge">+{len(related)} related</span>' if related else ""
     rel = ""
@@ -116,11 +118,21 @@ def story_details(st: Story, sid: str = "", show_region: bool = True, open_: boo
     id_attr = f' id="{esc(sid, quote=True)}"' if sid else ""
     return (f'<details class="st{" line" if related else ""}"{id_attr}{" open" if open_ else ""}>'
             f'<summary><span class="ht">{esc(st.headline)}</span><span class="meta">{_meta(st, show_region)}{badge}</span>{f"<span class=why>Why here: {esc(why)}</span>" if why else ""}</summary>'
-            f'<div class="body"><div class="by">{_by(st)}</div>{paras_html(st)}{rel}</div></details>')
+            f'<div class="body"><div class="by">{_by(st)}</div>{flag}{paras_html(st)}{rel}</div></details>')
+
+
+def figures_flag(c: Cluster) -> str:
+    """A small box when two different outlets give different figures for what looks like the same measure. Never says which is right."""
+    pairs = [(p.source.name, cl) for st in c.stories for p in st.paras for cl in p.claims]
+    diffs = disagreements(pairs)
+    if not diffs:
+        return ""
+    rows = "".join(f'<li><b>{esc(a.source)}</b>: {esc(a.shown)} <span class="vs">vs</span> <b>{esc(b.source)}</b>: {esc(b.shown)}</li>' for a, b in diffs)
+    return f'<div class="figdiff"><b>Figures differ.</b> Outlets give different numbers for what looks like the same measure (it may be a different time or basis). Check before relying on either.<ul>{rows}</ul></div>'
 
 
 def cluster_details(c: Cluster, uid: str = "", show_region: bool = True, why: str = "") -> str:
-    return story_details(c.lead, uid, show_region, related=c.related or None, why=why)
+    return story_details(c.lead, uid, show_region, related=c.related or None, why=why, flag=figures_flag(c))
 
 
 def fold(kind: str, fid: str, title: str, inner: str, count: str = "", accent: str = "", kicker: str = "", open_: bool = False, summary: str = "") -> str:
@@ -154,6 +166,19 @@ def leads_summary(clusters: list, limit: int = 3) -> str:
         return ""
     heads = [_short(c.lead.headline) for c in clusters[:limit]]
     return "Includes: " + " · ".join(heads) + (f" · +{len(clusters) - limit} more" if len(clusters) > limit else "")
+
+
+def watch_groups(clusters: list[Cluster], imp: Importance) -> list[tuple[str, list[Cluster]]]:
+    """Storylines whose headline mentions something on the reader's watchlist (config importance.watchlist), grouped by that word, in the config's order.
+    A storyline goes under the first watchlist word it mentions."""
+    groups: dict[str, list[Cluster]] = {w: [] for w, _ in imp.watch}
+    for c in clusters:
+        head = " . ".join([c.lead.headline] + list(c.lead.aka))
+        for w, rx in imp.watch:
+            if rx is not None and rx.search(head):
+                groups[w].append(c)
+                break
+    return [(w.title() if w.islower() else w, cl) for w, cl in groups.items() if cl]
 
 
 def groups_html(prefix: str, groups: list[tuple[str, list[Cluster]]], hue_by_index: bool = False) -> str:
@@ -352,6 +377,7 @@ details.st[open]{background:color-mix(in srgb,var(--accent,#888) 6%,var(--card))
 details.st[open]>summary{font-weight:inherit;border-bottom:1px dotted var(--rule)}
 details.st>summary{padding:.65rem .1rem;min-height:46px}
 .ht{display:block;font:700 1.02rem/1.28 var(--serif);overflow:hidden}
+.figdiff{margin:.5rem 0;padding:.5rem .7rem;border-left:4px solid #f59f00;background:color-mix(in srgb,#f59f00 12%,var(--card));font:500 .8rem/1.45 var(--sans);border-radius:0 6px 6px 0}.figdiff ul{margin:.3rem 0 0 1rem;padding:0}.figdiff .vs{color:var(--mute);font-style:italic}
 .why{display:block;font:500 .66rem var(--sans);letter-spacing:.02em;color:var(--mute);margin-top:.1rem}
 .meta{display:block;font:500 .7rem var(--sans);color:var(--mute);margin-top:.15rem;overflow:hidden}
 .meta b,.badge{font-weight:800;color:var(--red)}.badge{font:800 .62rem var(--sans);letter-spacing:.06em;text-transform:uppercase;background:var(--chip);padding:.1rem .4rem;border-radius:4px;color:var(--ink)}.badge.warn{background:#f59f00}
@@ -386,6 +412,13 @@ def outlets(c: Cluster) -> int:
     return len({x.name for st in c.stories for x in st.sources})
 
 
+def seen_yesterday(headline: str, prev_heads: list[str]) -> bool:
+    want = sig_words(headline)
+    if len(want) < 3:
+        return False
+    return any(len(want & sig_words(h)) / min(len(want), max(1, len(sig_words(h)))) >= 0.6 for h in prev_heads)
+
+
 def lead_clusters(all_clusters: list[Cluster], lim: dict, imp_cfg: Optional[dict] = None) -> list[tuple[Cluster, Rating]]:
     """Today in X: [(storyline, rating)]. What a storyline is ABOUT (central banks, crude, gold, data, your watchlist...) plus how many outlets and
     whether an official source confirms it decides; see news/importance.py. Never fewer than `top_floor`, never more than `top_max`."""
@@ -400,7 +433,7 @@ def _first_sentence(st: Story) -> str:
 
 
 def render_magazine(now: datetime, stories: list[Story], unread: list, stats: dict, coverage: list, reasons: list, llm_note: str, llm_error: str,
-                    llm, cal_note: str, cal: dict, cfg: dict, archive, **_ignored) -> str:
+                    llm, cal_note: str, cal: dict, cfg: dict, archive, prev_heads: Optional[list] = None, **_ignored) -> str:
     lim = cfg["limits"]
     sector_order = list((cfg.get("sectors") or {}).keys())
     upd_groups, used = event_updates(stories, cal, now)
@@ -421,9 +454,12 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     rows, gnote = load_glance(ROOT_DASH(cfg), now)
     parts.append(markets_html(rows, gnote))
 
+    prev = list(prev_heads or [])
+    fresh = [seen_yesterday(c.lead.headline, prev) is False for c, _ in top] if prev else []
     if top:
-        parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">What matters most this morning, judged by subject (rates, oil, gold, data, your watchlist), how many outlets carry it and whether an official source confirms it. The rest is in the sections below. Tap a headline to read it.</p>'
-                     + "".join(cluster_details(c, f"top-{i}", why=" · ".join(r.why)) for i, (c, r) in enumerate(top)) + "</section>")
+        trend = f" {sum(fresh)} new today, {len(fresh) - sum(fresh)} still running from yesterday." if prev else ""
+        parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">What matters most this morning, judged by subject (rates, oil, gold, data, your watchlist), how many outlets carry it and whether an official source confirms it. The rest is in the sections below. Tap a headline to read it.{trend}</p>'
+                     + "".join(cluster_details(c, f"top-{i}", why=" · ".join(([("new today" if fresh[i] else "still running from yesterday")] if prev else []) + r.why)) for i, (c, r) in enumerate(top)) + "</section>")
     elif not llm_note:
         parts.append('<div class="alert">No story could be built from the sources in this window.</div>')
 
@@ -437,6 +473,11 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
                         for i, (lbl, sts) in enumerate(upd_groups))
         parts.append(fold("block", "updates", "Event updates", inner, str(sum(len(s) for _, s in upd_groups)), "#2b8a3e", "What happened",
                           summary=names_summary([(lbl, len(sts)) for lbl, sts in upd_groups], 5)))
+
+    mine = watch_groups(all_clusters, Importance(cfg.get("importance")))
+    if mine:
+        parts.append(fold("block", "mine", "On your list", groups_html("w", mine), str(sum(_n(cl) for _, cl in mine)), "#c2255c", "Your instruments",
+                          summary=names_summary([(n, _n(cl)) for n, cl in mine])))
 
     if commodity:
         com = by_commodity(commodity)
@@ -457,6 +498,8 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     nav = ['<a href="#top">Top</a>', '<a href="#events">Events</a>']
     if upd_groups:
         nav.append('<a href="#updates">Updates</a>')
+    if mine:
+        nav.append('<a href="#mine">On your list</a>')
     if commodity:
         nav.append('<a href="#commodities">Energy &amp; metals</a>')
     nav += ['<a href="#regions">Jurisdictions</a>', '<a href="#sectors">Sectors</a>', '<a href="#headlines">Missed</a>', '<a href="#coverage">Coverage</a>']

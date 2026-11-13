@@ -627,3 +627,50 @@ def test_email_carries_pdf_and_html(tmp_path):
         def send_message(self, msg, from_addr, to_addrs): sent["names"] = sorted(p.get_filename() for p in msg.iter_attachments()); sent["to"] = to_addrs
     log = deliver({"GMAIL_USER": "a@b.c", "GMAIL_APP_PASSWORD": "p", "EMAIL_TO": "x@y.z; q@r.s"}, pdf, 3, "12 Nov 2026", smtp_factory=SMTP)
     assert sent["names"] == ["news_x.html", "news_x.pdf"] and sent["to"] == ["x@y.z", "q@r.s"] and "PDF + HTML" in log[0]
+
+
+# ---------------- figures differ, on your list, since yesterday, official feeds ----------------
+def test_figures_differ_flags_only_different_outlets_with_same_measure():
+    from news.figures import disagreements
+    d = disagreements([("Mint", "Brent crude fell 2.1% to $91.80 a barrel on Wednesday"), ("Reuters", "Brent crude fell 2.4% to $92.10 a barrel after talks"),
+                       ("Mint", "Brent crude fell 2.9% overnight")])
+    assert [(a.shown, b.shown) for a, b in d][0] == ("2.1%", "2.4%") and all(a.source != b.source for a, b in d)
+    assert disagreements([("A", "India GDP growth seen at 7% this year"), ("B", "Village fair drew 9% more visitors")]) == []       # different measure
+    assert disagreements([("A", "Brent crude fell 2.1% on Wednesday"), ("B", "Brent crude fell 2.1% in Asian trade")]) == []        # same number: no flag
+    assert disagreements([("A", "Brent crude rose 12 on Wednesday"), ("B", "Brent crude rose 15 on Wednesday")]) == []              # bare numbers are never compared
+
+
+def test_figures_flag_appears_in_the_story_body_and_on_your_list_groups_by_word():
+    a, b = _mini_story("Brent crude falls on Iran talks hopes", ["Mint"]), _mini_story("Brent crude slides as Iran talks resume", ["Reuters"])
+    a.paras[0].claims[:] = ["Brent crude fell 2.1% to $91.80 a barrel on Wednesday."]
+    b.paras[0].claims[:] = ["Brent crude fell 2.4% to $92.10 a barrel on Wednesday."]
+    html = _render([a, b, _mini_story("Nifty ends flat as banks drag", ["BS"])])
+    assert "Figures differ." in html and 'id="mine"' in html and "On your list" in html and "Brent" in html
+
+
+def test_since_yesterday_tags_and_rotation(tmp_path):
+    import json
+    from news.run_news import load_prev_headlines, rotate_latest
+    nd = tmp_path
+    ist = timezone(timedelta(hours=5, minutes=30))
+    yesterday = datetime(2026, 11, 12, 5, 40, tzinfo=ist)
+    today = datetime(2026, 11, 13, 5, 40, tzinfo=ist)
+    (nd / "latest.json").write_text(json.dumps({"generated": yesterday.isoformat(), "stories": [{"headline": "Brent crude falls on Iran talks hopes"}]}))
+    assert load_prev_headlines(nd, today) == ["Brent crude falls on Iran talks hopes"]
+    rotate_latest(nd, today)
+    (nd / "latest.json").write_text(json.dumps({"generated": today.isoformat(), "stories": [{"headline": "other"}]}))
+    assert load_prev_headlines(nd, today) == ["Brent crude falls on Iran talks hopes"]            # a second run the same day still compares with yesterday
+    rotate_latest(nd, today)
+    assert json.loads((nd / "latest_prev.json").read_text())["stories"][0]["headline"].startswith("Brent")   # not overwritten by same-day reruns
+    from news.magazine import seen_yesterday
+    assert seen_yesterday("Brent crude slides as Iran talks hopes grow", ["Brent crude falls on Iran talks hopes"]) and not seen_yesterday("Nifty ends flat as banks drag lower", ["Brent crude falls on Iran talks hopes"])
+    html = _render([_mini_story("Brent crude falls on Iran talks hopes", ["Mint", "BBC", "ET"])])
+    assert "Today in" in html
+
+
+def test_official_feeds_added_and_config_parses():
+    import yaml
+    cfg = yaml.safe_load(open(ROOT_CFG))
+    names = {f["name"] for f in cfg["feeds"]}
+    assert {"ECB press", "Bank of England news", "BIS media releases", "Fed monetary policy", "IMF", "Basel Committee (BCBS)", "OPEC", "SEBI"} <= names
+    assert all(f["category"] == "official" for f in cfg["feeds"] if f["name"] in ("IMF", "OECD", "IEA", "BIS media releases"))

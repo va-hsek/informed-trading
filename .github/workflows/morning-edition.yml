@@ -34,7 +34,7 @@ jobs:
           git config user.name "informed-trading-bot"
           git config user.email "actions@users.noreply.github.com"
           git add reports/*.html
-          git add -f data/news/latest.json data/news/diagnostics.json data/news/selftest.json || true
+          git add -f data/news/latest.json data/news/latest_prev.json data/news/diagnostics.json data/news/selftest.json || true
           git add config/calendar.yaml || true
           git diff --cached --quiet || git commit -m "Morning Edition $(TZ=Asia/Kolkata date +'%Y-%m-%d %H:%M IST')"
           git pull --rebase origin "${GITHUB_REF_NAME}"

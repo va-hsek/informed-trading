@@ -12,9 +12,27 @@
 feeds:
   # ---- official / primary ----
   - {name: "RBI press releases",      category: official, mode: rss, url: "https://www.rbi.org.in/pressreleases_rss.xml", status: verified, assume_tz: "+05:30"}
-  - {name: "Federal Reserve press",   category: official, mode: rss, url: "https://www.federalreserve.gov/feeds/press_all.xml", status: to_verify}
+  - {name: "Federal Reserve press",   category: official, mode: rss, url: "https://www.federalreserve.gov/feeds/press_all.xml", status: verified}
   - {name: "EIA Today in Energy",     category: official, mode: rss, url: "https://www.eia.gov/rss/todayinenergy.xml", status: to_verify}
   - {name: "PIB (Govt of India)",     category: official, mode: rss, url: "https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3", status: to_verify}
+  # ---- official, international (feed addresses checked 2026-11-13 unless marked) ----
+  - {name: "Fed speeches and testimony", category: official, region: americas, mode: rss, url: "https://www.federalreserve.gov/feeds/speeches_and_testimony.xml", status: verified}
+  - {name: "Fed monetary policy",   category: official, region: americas, mode: rss, url: "https://www.federalreserve.gov/feeds/press_monetary.xml", status: verified}
+  - {name: "ECB statistical releases", category: official, region: europe, mode: rss, url: "https://www.ecb.europa.eu/rss/statpress.html", status: verified}
+  - {name: "Bank of England news",  category: official, region: europe, mode: rss, url: "https://www.bankofengland.co.uk/rss/news", status: verified}
+  - {name: "BIS media releases",    category: official, mode: rss, url: "https://www.bis.org/doclist/all_pressrels.rss", status: verified}
+  - {name: "BIS central bankers' speeches", category: official, mode: rss, url: "https://www.bis.org/doclist/cbspeeches.rss", status: verified}
+  - {name: "BIS research and publications", category: official, mode: rss, url: "https://www.bis.org/doclist/bis_fsi_publs.rss", status: verified}
+  # No feed address could be checked for these, so they are read through Google News restricted to the institution's own site (headline, then the page itself).
+  - {name: "Basel Committee (BCBS)", category: official, mode: gnews, query: "site:bis.org (Basel Committee OR BCBS) when:7d"}
+  - {name: "IMF",                   category: official, mode: gnews, query: "site:imf.org when:3d"}
+  - {name: "World Bank",            category: official, mode: gnews, query: "site:worldbank.org when:3d"}
+  - {name: "OECD",                  category: official, mode: gnews, query: "site:oecd.org when:3d"}
+  - {name: "OPEC",                  category: official, region: middleeast, mode: gnews, query: "site:opec.org when:3d"}
+  - {name: "IEA",                   category: official, mode: gnews, query: "site:iea.org when:3d"}
+  - {name: "Bank of Japan",         category: official, region: apac, mode: gnews, query: "site:boj.or.jp when:3d"}
+  - {name: "People's Bank of China", category: official, region: apac, mode: gnews, query: "site:pbc.gov.cn OR site:english.pbc.gov.cn when:3d"}
+  - {name: "SEBI",                  category: official, region: india, mode: gnews, query: "site:sebi.gov.in when:3d", assume_tz: "+05:30"}
   # ---- world markets and macro (direct) ----
   - {name: "BBC Business",            category: world, mode: rss, url: "https://feeds.bbci.co.uk/news/business/rss.xml", status: to_verify}
   - {name: "CNBC Top News",           category: world, mode: rss, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", status: to_verify}
@@ -33,7 +51,7 @@ feeds:
   - {name: "ABC Australia Business",  category: world, region: apac, mode: rss, url: "https://www.abc.net.au/news/feed/2942460/rss.xml", status: to_verify}
   - {name: "Guardian Business",       category: world, region: europe, mode: rss, url: "https://www.theguardian.com/uk/business/rss", status: to_verify}
   - {name: "DW Business",             category: world, region: europe, mode: rss, url: "https://rss.dw.com/rdf/rss-en-bus", status: to_verify}
-  - {name: "ECB press",               category: official, region: europe, mode: rss, url: "https://www.ecb.europa.eu/rss/press.html", status: to_verify}
+  - {name: "ECB press",               category: official, region: europe, mode: rss, url: "https://www.ecb.europa.eu/rss/press.html", status: verified}
   - {name: "NPR Economy",             category: world, region: americas, mode: rss, url: "https://feeds.npr.org/1017/rss.xml", status: to_verify}
   - {name: "Al Jazeera",              category: world, region: middleeast, mode: rss, url: "https://www.aljazeera.com/xml/rss/all.xml", status: to_verify}
   - {name: "Nikkei Asia (via Google News)", category: world, region: apac, mode: gnews, query: "site:asia.nikkei.com when:2d", paywalled: true}

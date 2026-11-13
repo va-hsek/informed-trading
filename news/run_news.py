@@ -83,12 +83,40 @@ def _archive(it) -> str:
     return "https://archive.ph/newest/" + it.origin_url if (it.paywalled and it.origin_url) else ""
 
 
+def _day(iso: str) -> str:
+    try:
+        return datetime.fromisoformat(iso).astimezone(IST).strftime("%Y-%m-%d")
+    except (ValueError, TypeError):
+        return ""
+
+
+def load_prev_headlines(nd: Path, now: datetime) -> list[str]:
+    """Headlines of the most recent edition from an EARLIER day (so a second run on the same day still compares with yesterday)."""
+    try:
+        cur = json.loads((nd / "latest.json").read_text())
+        other = cur if _day(cur.get("generated", "")) != f"{now.astimezone(IST):%Y-%m-%d}" else json.loads((nd / "latest_prev.json").read_text())
+        return [s["headline"] for s in other.get("stories", [])]
+    except (OSError, ValueError, KeyError):
+        return []
+
+
+def rotate_latest(nd: Path, now: datetime) -> None:
+    """Before writing today's latest.json, keep the previous day's edition as latest_prev.json."""
+    try:
+        cur = (nd / "latest.json").read_text()
+        if _day(json.loads(cur).get("generated", "")) != f"{now.astimezone(IST):%Y-%m-%d}":
+            (nd / "latest_prev.json").write_text(cur)
+    except (OSError, ValueError):
+        pass
+
+
 def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callable = news_get, http_json: Callable = get_json,
                       llm: Optional[LLM] = None) -> tuple[str, dict]:
     cfg = yaml.safe_load((root / "config" / "news_sources.yaml").read_text())
     lim = cfg["limits"]
     now_utc = now.astimezone(timezone.utc)
     win_start = edition_window(now_utc, lim.get("edition_anchor_ist", "05:30"), float(lim.get("window_hours", 24)))
+    prev_heads = load_prev_headlines(root / "data" / "news", now)
     items, coverage = collect_items(cfg["feeds"], now_utc, http_get, win_start, lim["max_items_per_feed"])
     nl_items, nl_cov = fetch_newsletters(cfg.get("newsletters") or [], secrets, now_utc, win_start)
     have = {norm_title(i.title) for i in items} | {i.link for i in items}
@@ -317,7 +345,7 @@ def build_news_report(root: Path, now: datetime, secrets: dict, http_get: Callab
                                         "est_cost_usd": round(llm.est_cost_usd(), 4),
                                         "est_cost_inr": round(llm.est_cost_usd() * float((cfg.get("llm") or {}).get("usd_inr", 0) or 0), 1)} if llm is not None else None)}
     meta["mag"] = {"now": now, "stories": stories, "unread": hl, "stats": stats, "coverage": coverage, "reasons": reasons.most_common(12),
-                   "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg,
+                   "llm_note": llm_note, "llm_error": llm_error, "llm": llm, "cal_note": cal_note, "cal": cal or {}, "cfg": cfg, "prev_heads": prev_heads,
                    "archive": _archive}
     return "\n".join(L) + "\n", meta
 
@@ -338,6 +366,7 @@ def main(argv=None) -> int:
     (out / f"{stem}.html").write_text(page)
     nd = ROOT / "data" / "news"
     nd.mkdir(parents=True, exist_ok=True)
+    rotate_latest(nd, now)
     (nd / "latest.json").write_text(json.dumps(meta["latest"], indent=1))
     (nd / "diagnostics.json").write_text(json.dumps(meta["diagnostics"], indent=1, default=str))
     print(f"wrote reports/{stem}.html  ({meta['stories']} stories, {meta['sources']} sources, {meta['stats']['claims_kept']} claims)")
