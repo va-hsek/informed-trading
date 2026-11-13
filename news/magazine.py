@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from news.cluster import Cluster, by_commodity, by_region, by_sector, cluster, is_commodity
+from news.importance import Importance, Rating, pick_top
 from news.paper import IST, Source, Story
 
 esc = html.escape
@@ -106,7 +107,7 @@ def _by(st: Story) -> str:
 
 
 # ---------------------------------------------------------------- foldable units
-def story_details(st: Story, sid: str = "", show_region: bool = True, open_: bool = False, related: Optional[list] = None) -> str:
+def story_details(st: Story, sid: str = "", show_region: bool = True, open_: bool = False, related: Optional[list] = None, why: str = "") -> str:
     """One story: the headline is the whole closed state. Opened, it shows the verified paragraphs and, for a storyline, the related stories (each foldable)."""
     badge = f' <span class="badge">+{len(related)} related</span>' if related else ""
     rel = ""
@@ -114,12 +115,12 @@ def story_details(st: Story, sid: str = "", show_region: bool = True, open_: boo
         rel = '<div class="related"><div class="related-h">Related reporting</div>' + "".join(story_details(r, show_region=False) for r in related) + "</div>"
     id_attr = f' id="{esc(sid, quote=True)}"' if sid else ""
     return (f'<details class="st{" line" if related else ""}"{id_attr}{" open" if open_ else ""}>'
-            f'<summary><span class="ht">{esc(st.headline)}</span><span class="meta">{_meta(st, show_region)}{badge}</span></summary>'
+            f'<summary><span class="ht">{esc(st.headline)}</span><span class="meta">{_meta(st, show_region)}{badge}</span>{f"<span class=why>Why here: {esc(why)}</span>" if why else ""}</summary>'
             f'<div class="body"><div class="by">{_by(st)}</div>{paras_html(st)}{rel}</div></details>')
 
 
-def cluster_details(c: Cluster, uid: str = "", show_region: bool = True) -> str:
-    return story_details(c.lead, uid, show_region, related=c.related or None)
+def cluster_details(c: Cluster, uid: str = "", show_region: bool = True, why: str = "") -> str:
+    return story_details(c.lead, uid, show_region, related=c.related or None, why=why)
 
 
 def fold(kind: str, fid: str, title: str, inner: str, count: str = "", accent: str = "", kicker: str = "", open_: bool = False, summary: str = "") -> str:
@@ -351,6 +352,7 @@ details.st[open]{background:color-mix(in srgb,var(--accent,#888) 6%,var(--card))
 details.st[open]>summary{font-weight:inherit;border-bottom:1px dotted var(--rule)}
 details.st>summary{padding:.65rem .1rem;min-height:46px}
 .ht{display:block;font:700 1.02rem/1.28 var(--serif);overflow:hidden}
+.why{display:block;font:500 .66rem var(--sans);letter-spacing:.02em;color:var(--mute);margin-top:.1rem}
 .meta{display:block;font:500 .7rem var(--sans);color:var(--mute);margin-top:.15rem;overflow:hidden}
 .meta b,.badge{font-weight:800;color:var(--red)}.badge{font:800 .62rem var(--sans);letter-spacing:.06em;text-transform:uppercase;background:var(--chip);padding:.1rem .4rem;border-radius:4px;color:var(--ink)}.badge.warn{background:#f59f00}
 details.st>.body{padding:.1rem .2rem .9rem 1.15rem}.by{font:500 .72rem var(--sans);color:var(--mute);margin-bottom:.5rem}
@@ -384,15 +386,10 @@ def outlets(c: Cluster) -> int:
     return len({x.name for st in c.stories for x in st.sources})
 
 
-def lead_clusters(all_clusters: list[Cluster], lim: dict) -> list[Cluster]:
-    """Today in X. A storyline earns the top by being carried by several outlets (default 3 or more); there are never fewer than `top_floor`
-    (the strongest ones anyway) or more than `top_max`. X is simply how many qualified, so a quiet day is short and a big day is longer."""
-    need, floor, cap = int(lim.get("top_min_outlets", 3)), int(lim.get("top_floor", 3)), int(lim.get("top_max", 15))
-    pick = [i for i, c in enumerate(all_clusters) if outlets(c) >= need][:cap]
-    for i in range(min(floor, len(all_clusters))):
-        if i not in pick:
-            pick.append(i)
-    return [all_clusters[i] for i in sorted(pick)[:cap]]
+def lead_clusters(all_clusters: list[Cluster], lim: dict, imp_cfg: Optional[dict] = None) -> list[tuple[Cluster, Rating]]:
+    """Today in X: [(storyline, rating)]. What a storyline is ABOUT (central banks, crude, gold, data, your watchlist...) plus how many outlets and
+    whether an official source confirms it decides; see news/importance.py. Never fewer than `top_floor`, never more than `top_max`."""
+    return pick_top(all_clusters, Importance(imp_cfg), int(lim.get("top_floor", 3)), int(lim.get("top_max", 15)))
 
 
 def _first_sentence(st: Story) -> str:
@@ -412,7 +409,7 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     general = [s for s in rest if not is_commodity(s)]
 
     all_clusters = cluster(stories)
-    top = lead_clusters(all_clusters, lim)
+    top = lead_clusters(all_clusters, lim, cfg.get("importance"))
     words = sum(len(" ".join(c for p in s.paras for c in p.claims).split()) for s in stories)
     mins = max(1, round(words / 230))
 
@@ -425,8 +422,8 @@ def render_magazine(now: datetime, stories: list[Story], unread: list, stats: di
     parts.append(markets_html(rows, gnote))
 
     if top:
-        parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">The stories that matter most this morning: those carried by several outlets come first. Tap one to read it.</p>'
-                     + "".join(cluster_details(c, f"top-{i}") for i, c in enumerate(top)) + "</section>")
+        parts.append(f'<section class="five" id="top"><h2>Today in {len(top)}</h2><p class="intro">What matters most this morning, judged by subject (rates, oil, gold, data, your watchlist), how many outlets carry it and whether an official source confirms it. The rest is in the sections below. Tap a headline to read it.</p>'
+                     + "".join(cluster_details(c, f"top-{i}", why=" · ".join(r.why)) for i, (c, r) in enumerate(top)) + "</section>")
     elif not llm_note:
         parts.append('<div class="alert">No story could be built from the sources in this window.</div>')
 

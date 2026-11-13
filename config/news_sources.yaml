@@ -232,3 +232,43 @@ calendar_refresh:
 newsletters:
   - {name: "Exec Sum", from: "news@execsum.co", category: world, region: "", style: lines, site: "https://execsum.co/"}
 #  - {name: "Example Daily", from: "@example.com", category: world, region: ""}
+
+# ---- What earns a place in "Today in X" (news/importance.py). Everything else stays in the sections below as small headlines. ----
+# Score = strongest subject + a little for a second subject + watchlist + extra outlets (+ official) - penalties. A subject found in the headline counts
+# in full; only in the text, a little. Raise min_score for a shorter top section, lower it for a longer one. Each storyline's reasons are printed on the page.
+importance:
+  min_score: 9
+  per_theme_cap: 2            # at most this many per subject, so gold or crude cannot fill the top
+  outlet_points: 1.0          # per extra outlet carrying the storyline
+  outlet_max: 4.0
+  official_points: 3.0        # confirmed by an official source (central bank, regulator, agency)
+  watch_points: 1.5           # per watchlist word in the headline
+  watch_max: 3.0
+  themes:
+    - {key: rates,   label: "Rates and central banks", weight: 7, words: ["rate decision", "rate hike", "rate cut", "rate hikes", "rate cuts", "repo rate", "monetary policy", "policy rate", "fomc", "federal reserve", "the fed", "fed", "ecb", "rbi", "bank of england", "bank of japan", "boj", "basel", "interest rate", "interest rates", "powell", "lagarde", "treasury yield", "treasury yields", "bond yields"]}
+    - {key: crude,   label: "Crude oil",              weight: 7, words: ["crude", "brent", "wti", "opec", "oil price", "oil prices", "barrel", "oil output", "oil supply", "oil demand", "oil inventories"]}
+    - {key: natgas,  label: "Natural gas",            weight: 6, words: ["natural gas", "lng", "henry hub", "gas storage", "natgas"]}
+    - {key: gold,    label: "Gold",                   weight: 6, words: ["gold", "bullion"]}
+    - {key: silver,  label: "Silver",                 weight: 6, words: ["silver"]}
+    - {key: data,    label: "Economic data",          weight: 6, words: ["gdp", "cpi", "inflation", "payrolls", "jobs report", "pmi", "trade deficit", "industrial output", "industrial production", "unemployment", "retail sales", "iip"]}
+    - {key: shock,   label: "Geopolitics and trade",  weight: 5.5, words: ["hormuz", "sanction", "sanctions", "tariff", "tariffs", "ceasefire", "embargo", "blockade", "war", "attack on ships", "trade deal", "red sea"]}
+    - {key: indiamkt, label: "India markets",         weight: 5, words: ["nifty", "sensex", "bank nifty", "fii", "fpi", "sebi", "mcx", "nse", "bse", "dalal street"]}
+    - {key: fx,      label: "Currencies",             weight: 5, words: ["rupee", "dollar index", "yuan", "yen", "usd/inr", "forex reserves"]}
+    - {key: tech,    label: "Tech and AI",            weight: 3, words: ["nvidia", "semiconductor", "chip", "chips", "ai", "data centre", "data center"]}
+    - {key: deals,   label: "Deals",                  weight: 3, words: ["acquire", "acquires", "acquisition", "takeover", "merger", "buyout", "ipo"]}
+  penalties:                  # look like news but are not
+    - {label: "price list",   points: -9, words: ["rates today", "price today", "prices today", "rate today", "check gold prices", "gold rate", "silver rate", "petrol price", "diesel price", "horoscope"]}
+    - {label: "tips",         points: -6, words: ["stocks to buy", "stocks to watch", "stock picks", "buy or sell", "top gainers", "top losers", "multibagger", "should you buy"]}
+    - {label: "live blog",    points: -5, words: ["live updates", "live blog", "live:"]}
+  watchlist:                  # the instruments and themes you trade; edit freely
+    - crude
+    - brent
+    - natural gas
+    - gold
+    - silver
+    - copper
+    - nifty
+    - bank nifty
+    - sensex
+    - rupee
+    - mcx

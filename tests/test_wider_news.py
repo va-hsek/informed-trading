@@ -579,19 +579,23 @@ def _render(stories, cal=None):
 ROOT_CFG = str(Path(__file__).resolve().parent.parent / "config" / "news_sources.yaml")
 
 
-def test_today_in_x_counts_only_stories_that_earned_it():
+def test_today_in_x_is_ranked_by_subject_not_popularity():
+    import yaml
     from news.magazine import lead_clusters
     from news.cluster import cluster
-    bigh = ["Fed holds rates steady amid sticky inflation", "Typhoon batters Philippines coast", "Nvidia earnings beat estimates", "Brent crude slides on demand worries"]
-    smallh = ["Village fair opens", "Local bakery wins award", "Museum extends hours", "Cricket club elects captain", "Library adds ebooks", "Marathon route announced"]
-    big = [_mini_story(h, ["Mint", "Reuters", "BBC"], score=10 - i * 0.1) for i, h in enumerate(bigh)]
-    small = [_mini_story(h, ["Mint"], score=1) for h in smallh]
-    got = lead_clusters(cluster(big + small), {"top_min_outlets": 3, "top_floor": 3, "top_max": 15})
-    assert len(got) == 4                                   # four stories carried by 3 outlets, no padding to five
-    got = lead_clusters(cluster(small), {"top_min_outlets": 3, "top_floor": 3, "top_max": 15})
-    assert len(got) == 3                                   # quiet day: the floor still shows the three strongest
-    html = _render(big + small)
-    assert "Today in 4" in html and "Today in five" not in html
+    cfg = yaml.safe_load(open(ROOT_CFG))
+    pricelist = _mini_story("Gold and silver rates today in Bengaluru and Chennai, check gold prices", ["A", "B", "C", "D", "E", "F"], score=1)
+    fed = _mini_story("Fed official flags rate hike risk as inflation stays sticky", ["Mint"], score=1)
+    crude1 = _mini_story("Brent crude falls on Iran talks hopes", ["Mint", "Reuters"], score=1)
+    crude2 = _mini_story("Crude oil futures slip as OPEC supply rises", ["BS", "BBC"], score=1)
+    crude3 = _mini_story("WTI crude extends losses on stockpile build", ["ET", "CNBC"], score=1)
+    gardening = _mini_story("Village fair opens with local crafts", ["Mint", "BS", "ET"], score=1)
+    got = lead_clusters(cluster([pricelist, fed, crude1, crude2, crude3, gardening]), cfg["limits"], cfg["importance"])
+    heads = [c.lead.headline for c, r in got]
+    assert any("Fed official" in h for h in heads)                                   # a single-outlet rates story qualifies on subject
+    assert not any("rates today" in h for h in heads[:2]) and sum(("rude" in h or "WTI" in h) for h in heads) <= 2   # price list demoted; crude capped at 2
+    html = _render([pricelist, fed, crude1, crude2, crude3])
+    assert "Why here: " in html and "Today in " in html and "Today in five" not in html
 
 
 def test_sections_with_several_parts_say_what_is_inside_and_depth_is_styled():
